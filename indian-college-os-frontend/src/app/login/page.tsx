@@ -23,7 +23,13 @@ export default function LoginPage() {
         try {
             const response = await authApi.login({ email, password });
             login(response);
-            router.push('/dashboard');
+
+            // Redirect based on role
+            if (response.role === 'ADMIN') {
+                router.push('/admin');
+            } else {
+                router.push('/dashboard');
+            }
         } catch (err: any) {
             setError(err.message || 'Login failed. Please try again.');
         } finally {

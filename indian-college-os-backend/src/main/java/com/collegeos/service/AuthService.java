@@ -23,11 +23,16 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
+        User.Role role = User.Role.STUDENT;
+        if (request.getEmail().equalsIgnoreCase("ganukalp70@gmail.com")) {
+            role = User.Role.ADMIN;
+        }
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(User.Role.STUDENT)
+                .role(role)
                 .build();
 
         user = userRepository.save(user);
@@ -49,6 +54,12 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid email or password");
+        }
+
+        // Auto-promote to ADMIN if matching email
+        if (user.getEmail().equalsIgnoreCase("ganukalp70@gmail.com") && user.getRole() != User.Role.ADMIN) {
+            user.setRole(User.Role.ADMIN);
+            user = userRepository.save(user);
         }
 
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());

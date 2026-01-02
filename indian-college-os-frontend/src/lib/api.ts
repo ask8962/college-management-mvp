@@ -7,9 +7,13 @@ interface FetchOptions extends RequestInit {
 async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
     const { token, ...fetchOptions } = options;
 
-    const headers: HeadersInit = {
-        ...fetchOptions.headers,
-    };
+    const headers: Record<string, string> = {};
+
+    // Copy existing headers
+    if (fetchOptions.headers) {
+        const existingHeaders = fetchOptions.headers as Record<string, string>;
+        Object.assign(headers, existingHeaders);
+    }
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -31,6 +35,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 
     return response.json();
 }
+
 
 // Auth APIs
 export interface AuthResponse {

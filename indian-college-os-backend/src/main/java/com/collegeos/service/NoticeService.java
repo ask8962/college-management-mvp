@@ -16,12 +16,12 @@ import java.util.stream.Collectors;
 public class NoticeService {
 
     private final NoticeRepository noticeRepository;
-    private final CloudinaryService cloudinaryService;
+    private final GcsStorageService storageService;
     private final AiSummaryService aiSummaryService;
 
     public NoticeResponse create(String title, MultipartFile file) {
-        // Upload file to Cloudinary
-        String fileUrl = cloudinaryService.uploadFile(file);
+        // Upload file to Google Cloud Storage
+        String fileUrl = storageService.uploadFile(file);
 
         // Generate summary if PDF
         String summary = "";
@@ -51,8 +51,8 @@ public class NoticeService {
         notice.setTitle(title);
 
         if (file != null && !file.isEmpty()) {
-            // Upload new file to Cloudinary
-            String fileUrl = cloudinaryService.uploadFile(file);
+            // Upload new file to GCS
+            String fileUrl = storageService.uploadFile(file);
             notice.setFileUrl(fileUrl);
 
             // Regenerate summary if PDF

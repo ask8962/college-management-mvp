@@ -23,14 +23,6 @@ export default function NoticeCard({ notice }: NoticeCardProps) {
     // Check if file is an image
     const isImage = notice.fileUrl?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)/);
 
-    // For Cloudinary PDFs, convert image/upload to raw/upload for better viewing
-    const getDirectUrl = () => {
-        if (isPDF && notice.fileUrl?.includes('/image/upload/')) {
-            return notice.fileUrl.replace('/image/upload/', '/raw/upload/');
-        }
-        return notice.fileUrl;
-    };
-
     return (
         <div className="glass rounded-2xl p-6 card-hover">
             <div className="flex items-start justify-between mb-4">
@@ -80,7 +72,7 @@ export default function NoticeCard({ notice }: NoticeCardProps) {
                         </div>
                         <div className="flex-1 p-4">
                             <iframe
-                                src={getDirectUrl()}
+                                src={notice.fileUrl}
                                 className="w-full h-full rounded-lg bg-white"
                                 title={notice.title}
                             />
@@ -100,7 +92,7 @@ export default function NoticeCard({ notice }: NoticeCardProps) {
                             Preview PDF
                         </button>
                         <a
-                            href={getDirectUrl()}
+                            href={notice.fileUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
@@ -109,7 +101,7 @@ export default function NoticeCard({ notice }: NoticeCardProps) {
                             Open in New Tab
                         </a>
                         <a
-                            href={getDirectUrl()}
+                            href={notice.fileUrl}
                             download
                             className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors font-medium"
                         >

@@ -50,6 +50,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         { href: '/admin/exams', icon: Plus, label: 'Create Exam' },
         { href: '/admin/placements', icon: Plus, label: 'Add Placement' },
         { href: '/admin/attendance', icon: Calendar, label: 'Manage Attendance' },
+        { href: '/dashboard/chat', icon: MessageSquare, label: '💬 Chat Rooms' },
     ];
 
     const links = isAdmin ? adminLinks : studentLinks;

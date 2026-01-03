@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/auth';
-import { Bell, BookOpen, Briefcase, Calendar, Plus, Users } from 'lucide-react';
+import { Bell, BookOpen, Briefcase, Calendar, Plus, Users, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
@@ -13,6 +13,7 @@ export default function AdminPage() {
         { href: '/admin/exams', icon: BookOpen, label: 'Create Exam', desc: 'Schedule new exams and deadlines' },
         { href: '/admin/placements', icon: Briefcase, label: 'Add Placement', desc: 'Post new placement opportunities' },
         { href: '/admin/attendance', icon: Calendar, label: 'Manage Attendance', desc: 'Add attendance records for students' },
+        { href: '/dashboard/chat', icon: MessageSquare, label: '💬 Chat Rooms', desc: 'Create chat rooms and toggle broadcast mode' },
     ];
 
 

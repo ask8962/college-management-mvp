@@ -46,6 +46,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/placements/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
 
+                        // Chat endpoints - PATCH for broadcast toggle (Admin only)
+                        .requestMatchers(HttpMethod.PATCH, "/chat/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/chat/rooms").hasRole("ADMIN")
+
                         // Authenticated endpoints
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

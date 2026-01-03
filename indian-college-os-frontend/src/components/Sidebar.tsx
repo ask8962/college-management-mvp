@@ -20,7 +20,8 @@ import {
     AlertTriangle,
     Sun,
     Moon,
-    MessageSquare
+    MessageSquare,
+    Target
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -38,6 +39,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         { href: '/dashboard/notices', icon: Bell, label: 'Notices' },
         { href: '/dashboard/exams', icon: BookOpen, label: 'Exams' },
         { href: '/dashboard/placements', icon: Briefcase, label: 'Placements' },
+        { href: '/dashboard/tasks', icon: Target, label: '🎯 My Goals' },
         { href: '/dashboard/hustle', icon: Zap, label: '🔥 Hustle' },
         { href: '/dashboard/ratings', icon: Star, label: '⭐ Rate Profs' },
         { href: '/dashboard/alerts', icon: AlertTriangle, label: '🚨 Flash Alert' },

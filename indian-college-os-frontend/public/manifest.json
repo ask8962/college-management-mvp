@@ -1,0 +1,59 @@
+{
+    "name": "Indian College OS",
+    "short_name": "College OS",
+    "description": "The Ultimate Student Management Platform for Indian Colleges",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f0f23",
+    "theme_color": "#6366f1",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "categories": [
+        "education",
+        "productivity"
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Home",
+            "description": "Go to dashboard",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Attendance",
+            "short_name": "Attend",
+            "description": "Check attendance",
+            "url": "/dashboard/attendance"
+        },
+        {
+            "name": "My Goals",
+            "short_name": "Tasks",
+            "description": "View your tasks",
+            "url": "/dashboard/tasks"
+        }
+    ]
+}

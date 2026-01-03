@@ -455,3 +455,61 @@ export const chatApi = {
             token,
         }),
 };
+
+// Task APIs (Personal Todo List)
+export interface Task {
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+    priority: string;
+    completed: boolean;
+    dueDate: string;
+    createdAt: string;
+    completedAt?: string;
+    overdue: boolean;
+}
+
+export interface TaskStats {
+    completed: number;
+    pending: number;
+    overdue: number;
+    total: number;
+}
+
+export const taskApi = {
+    getAll: (token: string, completed?: boolean) => {
+        const query = completed !== undefined ? `?completed=${completed}` : '';
+        return fetchApi<Task[]>(`/tasks${query}`, { token });
+    },
+
+    getStats: (token: string) =>
+        fetchApi<TaskStats>('/tasks/stats', { token }),
+
+    create: (token: string, data: { title: string; description?: string; category?: string; priority?: string; dueDate?: string }) =>
+        fetchApi<Task>('/tasks', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    update: (token: string, taskId: string, data: { title: string; description?: string; category?: string; priority?: string; dueDate?: string }) =>
+        fetchApi<Task>(`/tasks/${taskId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    toggle: (token: string, taskId: string) =>
+        fetchApi<Task>(`/tasks/${taskId}/toggle`, {
+            method: 'PATCH',
+            token,
+        }),
+
+    delete: (token: string, taskId: string) =>
+        fetchApi<void>(`/tasks/${taskId}`, {
+            method: 'DELETE',
+            token,
+        }),
+};
+

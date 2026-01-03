@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
 import AlertNotifier from '@/components/AlertNotifier';
+import InstallPrompt from '@/components/InstallPrompt';
 
 export default function DashboardLayout({
     children,
@@ -40,6 +41,7 @@ export default function DashboardLayout({
     return (
         <div className="min-h-screen">
             <AlertNotifier />
+            <InstallPrompt />
             <Sidebar onLogout={handleLogout} />
             <main className="ml-64 p-8">
                 {children}
@@ -47,3 +49,4 @@ export default function DashboardLayout({
         </div>
     );
 }
+

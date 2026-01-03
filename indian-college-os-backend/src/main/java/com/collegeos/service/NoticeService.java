@@ -44,6 +44,40 @@ public class NoticeService {
         return mapToResponse(notice);
     }
 
+    public NoticeResponse update(String id, String title, MultipartFile file) {
+        Notice notice = noticeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notice not found"));
+
+        notice.setTitle(title);
+
+        if (file != null && !file.isEmpty()) {
+            // Upload new file to Cloudinary
+            String fileUrl = cloudinaryService.uploadFile(file);
+            notice.setFileUrl(fileUrl);
+
+            // Regenerate summary if PDF
+            String summary = "";
+            String fileName = file.getOriginalFilename();
+            if (fileName != null && fileName.toLowerCase().endsWith(".pdf")) {
+                String extractedText = aiSummaryService.extractTextFromPdf(file);
+                summary = aiSummaryService.generateSummary(extractedText);
+            } else {
+                summary = "Image notice - no text summary available.";
+            }
+            notice.setSummary(summary);
+        }
+
+        notice = noticeRepository.save(notice);
+        return mapToResponse(notice);
+    }
+
+    public void delete(String id) {
+        if (!noticeRepository.existsById(id)) {
+            throw new RuntimeException("Notice not found");
+        }
+        noticeRepository.deleteById(id);
+    }
+
     public List<NoticeResponse> getAll() {
         return noticeRepository.findAllByOrderByCreatedAtDesc()
                 .stream()

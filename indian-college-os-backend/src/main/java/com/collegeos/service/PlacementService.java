@@ -29,6 +29,26 @@ public class PlacementService {
         return mapToResponse(placement);
     }
 
+    public PlacementResponse update(String id, PlacementRequest request) {
+        Placement placement = placementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Placement not found"));
+
+        placement.setCompanyName(request.getCompanyName());
+        placement.setRole(request.getRole());
+        placement.setEligibility(request.getEligibility());
+        placement.setDeadline(request.getDeadline());
+
+        placement = placementRepository.save(placement);
+        return mapToResponse(placement);
+    }
+
+    public void delete(String id) {
+        if (!placementRepository.existsById(id)) {
+            throw new RuntimeException("Placement not found");
+        }
+        placementRepository.deleteById(id);
+    }
+
     public List<PlacementResponse> getAll() {
         return placementRepository.findAllByOrderByDeadlineAsc()
                 .stream()

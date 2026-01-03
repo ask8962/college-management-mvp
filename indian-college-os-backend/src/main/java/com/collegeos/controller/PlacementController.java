@@ -6,6 +6,7 @@ import com.collegeos.service.PlacementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,8 +19,24 @@ public class PlacementController {
     private final PlacementService placementService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PlacementResponse> create(@Valid @RequestBody PlacementRequest request) {
         return ResponseEntity.ok(placementService.create(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PlacementResponse> update(
+            @PathVariable String id,
+            @Valid @RequestBody PlacementRequest request) {
+        return ResponseEntity.ok(placementService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        placementService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping

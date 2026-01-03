@@ -29,6 +29,26 @@ public class ExamService {
         return mapToResponse(exam);
     }
 
+    public ExamResponse update(String id, ExamRequest request) {
+        Exam exam = examRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Exam not found"));
+
+        exam.setSubject(request.getSubject());
+        exam.setExamDate(request.getExamDate());
+        exam.setDeadline(request.getDeadline());
+        exam.setDescription(request.getDescription());
+
+        exam = examRepository.save(exam);
+        return mapToResponse(exam);
+    }
+
+    public void delete(String id) {
+        if (!examRepository.existsById(id)) {
+            throw new RuntimeException("Exam not found");
+        }
+        examRepository.deleteById(id);
+    }
+
     public List<ExamResponse> getAll() {
         return examRepository.findAllByOrderByExamDateAsc()
                 .stream()

@@ -40,6 +40,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/notices/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/exams/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/placements/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/attendance/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/notices/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/exams/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/placements/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
 
                         // Authenticated endpoints

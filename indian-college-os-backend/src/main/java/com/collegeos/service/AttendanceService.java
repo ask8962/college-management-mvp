@@ -28,6 +28,26 @@ public class AttendanceService {
         return mapToResponse(attendance);
     }
 
+    public AttendanceResponse update(String id, AttendanceRequest request) {
+        Attendance attendance = attendanceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Attendance record not found"));
+
+        attendance.setStudentId(request.getStudentId());
+        attendance.setSubject(request.getSubject());
+        attendance.setDate(request.getDate());
+        attendance.setStatus(request.getStatus());
+
+        attendance = attendanceRepository.save(attendance);
+        return mapToResponse(attendance);
+    }
+
+    public void delete(String id) {
+        if (!attendanceRepository.existsById(id)) {
+            throw new RuntimeException("Attendance record not found");
+        }
+        attendanceRepository.deleteById(id);
+    }
+
     public List<AttendanceResponse> getByStudentId(String studentId) {
         return attendanceRepository.findByStudentId(studentId)
                 .stream()

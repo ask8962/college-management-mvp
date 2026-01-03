@@ -7,7 +7,7 @@ import com.collegeos.service.AttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +21,24 @@ public class AttendanceController {
     private final JwtUtil jwtUtil;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AttendanceResponse> create(@Valid @RequestBody AttendanceRequest request) {
         return ResponseEntity.ok(attendanceService.create(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AttendanceResponse> update(
+            @PathVariable String id,
+            @Valid @RequestBody AttendanceRequest request) {
+        return ResponseEntity.ok(attendanceService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        attendanceService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping

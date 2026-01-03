@@ -31,13 +31,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = (userData: AuthResponse) => {
+        if (!userData.token) return;
+
         setUser(userData);
         setToken(userData.token);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', userData.token);
         // Set cookies for middleware
         document.cookie = `token=${userData.token}; path=/; max-age=86400; SameSite=Strict`;
-        document.cookie = `role=${userData.role}; path=/; max-age=86400; SameSite=Strict`;
+        document.cookie = `role=${userData.role || 'STUDENT'}; path=/; max-age=86400; SameSite=Strict`;
     };
 
     const logout = () => {

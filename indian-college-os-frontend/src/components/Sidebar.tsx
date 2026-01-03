@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
@@ -16,7 +17,9 @@ import {
     User,
     Zap,
     Star,
-    AlertTriangle
+    AlertTriangle,
+    Sun,
+    Moon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -94,8 +97,12 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                 })}
             </nav>
 
-            {/* Logout Button */}
-            <div className="p-4 border-t border-white/10">
+            {/* Footer with Theme Toggle and Logout */}
+            <div className="p-4 border-t border-white/10 space-y-2">
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
+                {/* Logout Button */}
                 <button
                     onClick={onLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
@@ -105,5 +112,46 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                 </button>
             </div>
         </aside>
+    );
+}
+
+function ThemeToggle() {
+    const [mounted, setMounted] = useState(false);
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+    useEffect(() => {
+        setMounted(true);
+        const stored = localStorage.getItem('theme') as 'light' | 'dark';
+        if (stored) {
+            setTheme(stored);
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+    };
+
+    if (!mounted) return null;
+
+    return (
+        <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all duration-200"
+        >
+            {theme === 'dark' ? (
+                <>
+                    <Sun className="h-5 w-5" />
+                    <span className="font-medium">Light Mode</span>
+                </>
+            ) : (
+                <>
+                    <Moon className="h-5 w-5" />
+                    <span className="font-medium">Dark Mode</span>
+                </>
+            )}
+        </button>
     );
 }

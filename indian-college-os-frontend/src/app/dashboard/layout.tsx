@@ -4,8 +4,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
-import AlertNotifier from '@/components/AlertNotifier';
-import InstallPrompt from '@/components/InstallPrompt';
 
 export default function DashboardLayout({
     children,
@@ -23,13 +21,13 @@ export default function DashboardLayout({
 
     const handleLogout = () => {
         logout();
-        router.push('/');
+        router.push('/login');
     };
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="spinner"></div>
+            <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+                <div className="spinner-lg"></div>
             </div>
         );
     }
@@ -39,14 +37,13 @@ export default function DashboardLayout({
     }
 
     return (
-        <div className="min-h-screen">
-            <AlertNotifier />
-            <InstallPrompt />
+        <div className="min-h-screen bg-neutral-50">
             <Sidebar onLogout={handleLogout} />
-            <main className="ml-64 p-8">
-                {children}
+            <main className="ml-56 min-h-screen">
+                <div className="p-6 max-w-container mx-auto">
+                    {children}
+                </div>
             </main>
         </div>
     );
 }
-

@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { authApi } from '@/lib/api';
-import { GraduationCap, Mail, Lock, User, ArrowLeft, Hash } from 'lucide-react';
 
 export default function RegisterPage() {
     const [name, setName] = useState('');
     const [studentId, setStudentId] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
@@ -20,6 +20,17 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -34,111 +45,117 @@ export default function RegisterPage() {
     };
 
     return (
-        <main className="min-h-screen flex items-center justify-center px-4 py-12">
-            <div className="w-full max-w-md animate-fade-in">
-                <Link href="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors">
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to home
-                </Link>
-
-                <div className="glass rounded-3xl p-8">
-                    <div className="flex justify-center mb-6">
-                        <div className="p-3 bg-primary-500/20 rounded-xl">
-                            <GraduationCap className="h-10 w-10 text-primary-300" />
+        <div className="min-h-screen bg-neutral-50 flex flex-col">
+            {/* Header */}
+            <header className="h-16 bg-white border-b border-neutral-200">
+                <div className="container-narrow h-full flex items-center">
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded bg-primary-500 flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">CO</span>
                         </div>
-                    </div>
+                        <span className="font-semibold text-neutral-900">College OS</span>
+                    </Link>
+                </div>
+            </header>
 
-                    <h1 className="text-3xl font-bold text-center mb-2">Create Account</h1>
-                    <p className="text-gray-400 text-center mb-8">Join the student community today</p>
-
-                    {error && (
-                        <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6">
-                            {error}
+            {/* Main Content */}
+            <main className="flex-1 flex items-center justify-center py-12 px-4">
+                <div className="w-full max-w-sm">
+                    <div className="card">
+                        <div className="text-center mb-6">
+                            <h1 className="text-xl font-semibold text-neutral-900">
+                                Create your account
+                            </h1>
+                            <p className="text-sm text-neutral-600 mt-1">
+                                Fill in your details to get started
+                            </p>
                         </div>
-                    )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Full Name</label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        {error && (
+                            <div className="alert alert-error mb-4">
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="input-label">Full Name</label>
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     required
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-primary-500 transition-colors"
-                                    placeholder="John Doe"
+                                    className="input-field"
+                                    placeholder="Enter your full name"
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Student ID / Roll Number</label>
-                            <div className="relative">
-                                <Hash className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <div>
+                                <label className="input-label">Student ID</label>
                                 <input
                                     type="text"
                                     value={studentId}
                                     onChange={(e) => setStudentId(e.target.value)}
                                     required
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-primary-500 transition-colors"
+                                    className="input-field"
                                     placeholder="e.g., 2024CS001"
                                 />
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">This cannot be changed later</p>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <div>
+                                <label className="input-label">Email Address</label>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-primary-500 transition-colors"
+                                    className="input-field"
                                     placeholder="you@example.com"
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <div>
+                                <label className="input-label">Password</label>
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    minLength={6}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-primary-500 transition-colors"
-                                    placeholder="••••••••"
+                                    className="input-field"
+                                    placeholder="Minimum 6 characters"
                                 />
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">Minimum 6 characters</p>
-                        </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full btn-primary flex items-center justify-center gap-2"
-                        >
-                            {loading ? <div className="spinner"></div> : 'Create Account'}
-                        </button>
-                    </form>
+                            <div>
+                                <label className="input-label">Confirm Password</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    className="input-field"
+                                    placeholder="Re-enter your password"
+                                />
+                            </div>
 
-                    <p className="text-center mt-6 text-gray-400">
-                        Already have an account?{' '}
-                        <Link href="/login" className="text-primary-400 hover:text-primary-300 transition-colors">
-                            Sign in
-                        </Link>
-                    </p>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="btn btn-primary w-full"
+                            >
+                                {loading ? <div className="spinner"></div> : 'Create Account'}
+                            </button>
+                        </form>
+
+                        <p className="text-center mt-6 text-sm text-neutral-600">
+                            Already have an account?{' '}
+                            <Link href="/login" className="text-primary-500 hover:underline">
+                                Sign in
+                            </Link>
+                        </p>
+                    </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
     );
 }
-

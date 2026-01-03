@@ -8,47 +8,82 @@ module.exports = {
     theme: {
         extend: {
             colors: {
+                // Primary: Deep Navy Blue
                 primary: {
-                    50: '#eef2ff',
-                    100: '#e0e7ff',
-                    200: '#c7d2fe',
-                    300: '#a5b4fc',
-                    400: '#818cf8',
-                    500: '#6366f1',
-                    600: '#4f46e5',
-                    700: '#4338ca',
-                    800: '#3730a3',
-                    900: '#312e81',
+                    50: '#eff6ff',
+                    100: '#dbeafe',
+                    200: '#bfdbfe',
+                    300: '#93c5fd',
+                    400: '#60a5fa',
+                    500: '#1e40af', // Main primary
+                    600: '#1e3a8a',
+                    700: '#1e3a8a',
+                    800: '#172554',
+                    900: '#0f172a',
                 },
-                accent: {
-                    50: '#fdf4ff',
-                    100: '#fae8ff',
-                    200: '#f5d0fe',
-                    300: '#f0abfc',
-                    400: '#e879f9',
-                    500: '#d946ef',
-                    600: '#c026d3',
-                    700: '#a21caf',
-                    800: '#86198f',
-                    900: '#701a75',
+                // Neutral Grays
+                neutral: {
+                    50: '#fafafa',
+                    100: '#f5f5f5',
+                    200: '#e5e5e5',
+                    300: '#d4d4d4',
+                    400: '#a3a3a3',
+                    500: '#737373',
+                    600: '#525252',
+                    700: '#404040',
+                    800: '#262626',
+                    900: '#171717',
+                },
+                // Success Green (subtle)
+                success: {
+                    50: '#f0fdf4',
+                    100: '#dcfce7',
+                    500: '#22c55e',
+                    600: '#16a34a',
+                    700: '#15803d',
+                },
+                // Warning/Error
+                warning: {
+                    50: '#fffbeb',
+                    500: '#f59e0b',
+                    600: '#d97706',
+                },
+                error: {
+                    50: '#fef2f2',
+                    500: '#ef4444',
+                    600: '#dc2626',
                 },
             },
-            animation: {
-                'fade-in': 'fadeIn 0.5s ease-out',
-                'slide-up': 'slideUp 0.5s ease-out',
-                'pulse-slow': 'pulse 3s infinite',
+            fontFamily: {
+                sans: ['Inter', 'IBM Plex Sans', 'system-ui', '-apple-system', 'sans-serif'],
             },
-            keyframes: {
-                fadeIn: {
-                    '0%': { opacity: '0' },
-                    '100%': { opacity: '1' },
-                },
-                slideUp: {
-                    '0%': { opacity: '0', transform: 'translateY(20px)' },
-                    '100%': { opacity: '1', transform: 'translateY(0)' },
-                },
+            fontSize: {
+                xs: ['0.75rem', { lineHeight: '1rem' }],
+                sm: ['0.875rem', { lineHeight: '1.25rem' }],
+                base: ['0.9375rem', { lineHeight: '1.5rem' }], // 15px
+                lg: ['1.125rem', { lineHeight: '1.75rem' }],
+                xl: ['1.25rem', { lineHeight: '1.75rem' }],
+                '2xl': ['1.5rem', { lineHeight: '2rem' }],
+                '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+            },
+            spacing: {
+                '18': '4.5rem',
+                '22': '5.5rem',
+            },
+            maxWidth: {
+                'container': '1200px',
+            },
+            boxShadow: {
+                'soft': '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+                'card': '0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)',
+            },
+            borderRadius: {
+                'sm': '4px',
+                'DEFAULT': '6px',
+                'md': '8px',
+                'lg': '10px',
             },
         },
     },
     plugins: [],
-};
+}

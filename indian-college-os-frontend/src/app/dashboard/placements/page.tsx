@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { placementApi, Placement } from '@/lib/api';
-import { Briefcase, ExternalLink, Building2, DollarSign, Calendar } from 'lucide-react';
+import { Briefcase, Building2, Calendar, CheckCircle } from 'lucide-react';
 
 export default function PlacementsPage() {
     const { token } = useAuth();
@@ -67,16 +67,14 @@ export default function PlacementsPage() {
                                     <Building2 className="w-6 h-6 text-neutral-500" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-neutral-900">{placement.company}</h3>
+                                    <h3 className="font-semibold text-neutral-900">{placement.companyName}</h3>
                                     <p className="text-sm text-primary-500">{placement.role}</p>
 
                                     <div className="mt-3 space-y-1">
-                                        {placement.package && (
-                                            <div className="flex items-center gap-2 text-sm text-neutral-600">
-                                                <DollarSign className="w-4 h-4" />
-                                                {placement.package}
-                                            </div>
-                                        )}
+                                        <div className="flex items-center gap-2 text-sm text-neutral-600">
+                                            <CheckCircle className="w-4 h-4" />
+                                            Eligibility: {placement.eligibility}
+                                        </div>
                                         {placement.deadline && (
                                             <div className="flex items-center gap-2 text-sm text-neutral-600">
                                                 <Calendar className="w-4 h-4" />
@@ -84,24 +82,6 @@ export default function PlacementsPage() {
                                             </div>
                                         )}
                                     </div>
-
-                                    {placement.description && (
-                                        <p className="mt-3 text-sm text-neutral-600 line-clamp-2">
-                                            {placement.description}
-                                        </p>
-                                    )}
-
-                                    {placement.applyLink && (
-                                        <a
-                                            href={placement.applyLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn btn-primary btn-sm mt-4"
-                                        >
-                                            Apply Now
-                                            <ExternalLink className="w-4 h-4" />
-                                        </a>
-                                    )}
                                 </div>
                             </div>
                         </div>

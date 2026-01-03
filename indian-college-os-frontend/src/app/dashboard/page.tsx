@@ -21,7 +21,7 @@ export default function DashboardPage() {
                     examApi.getAll(token)
                 ]);
                 setRecentNotices(notices.slice(0, 3));
-                setUpcomingExams(exams.filter(e => new Date(e.date) > new Date()).slice(0, 3));
+                setUpcomingExams(exams.filter(e => new Date(e.examDate) > new Date()).slice(0, 3));
             } catch (error) {
                 console.error('Failed to load dashboard:', error);
             } finally {
@@ -150,9 +150,8 @@ export default function DashboardPage() {
                                     <BookOpen className="w-4 h-4 text-neutral-400 mt-0.5 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-neutral-900 truncate">{exam.subject}</p>
-                                        <p className="text-xs text-neutral-500">{formatDate(exam.date)} • {exam.time}</p>
+                                        <p className="text-xs text-neutral-500">{formatDate(exam.examDate)}</p>
                                     </div>
-                                    <span className="badge badge-info">{exam.type}</span>
                                 </div>
                             ))}
                         </div>

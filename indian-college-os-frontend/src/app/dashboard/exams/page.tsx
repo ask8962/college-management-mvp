@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { examApi, Exam } from '@/lib/api';
-import { BookOpen, Clock, MapPin, Calendar } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 export default function ExamsPage() {
     const { token } = useAuth();
@@ -28,7 +28,7 @@ export default function ExamsPage() {
 
     const now = new Date();
     const filteredExams = exams.filter(exam => {
-        const examDate = new Date(exam.date);
+        const examDate = new Date(exam.examDate);
         if (filter === 'upcoming') return examDate >= now;
         if (filter === 'past') return examDate < now;
         return true;
@@ -85,34 +85,28 @@ export default function ExamsPage() {
                     <thead>
                         <tr>
                             <th>Subject</th>
-                            <th>Type</th>
                             <th>Date</th>
-                            <th>Time</th>
-                            <th>Venue</th>
+                            <th>Description</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredExams.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center text-neutral-500 py-8">
+                                <td colSpan={4} className="text-center text-neutral-500 py-8">
                                     No exams found.
                                 </td>
                             </tr>
                         ) : (
                             filteredExams.map((exam) => {
-                                const daysUntil = getDaysUntil(exam.date);
+                                const daysUntil = getDaysUntil(exam.examDate);
                                 const isPast = daysUntil < 0;
 
                                 return (
                                     <tr key={exam.id}>
                                         <td className="font-medium">{exam.subject}</td>
-                                        <td>
-                                            <span className="badge badge-info">{exam.type}</span>
-                                        </td>
-                                        <td>{formatDate(exam.date)}</td>
-                                        <td>{exam.time}</td>
-                                        <td>{exam.venue || '—'}</td>
+                                        <td>{formatDate(exam.examDate)}</td>
+                                        <td>{exam.description || '—'}</td>
                                         <td>
                                             {isPast ? (
                                                 <span className="badge badge-neutral">Completed</span>

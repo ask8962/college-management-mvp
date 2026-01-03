@@ -22,6 +22,9 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
+    @Indexed(unique = true)
+    private String studentId;
+
     private String password;
 
     private Role role;

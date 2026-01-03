@@ -41,13 +41,14 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 export interface AuthResponse {
     token: string;
     id: string;
+    studentId: string;
     name: string;
     email: string;
     role: 'ADMIN' | 'STUDENT';
 }
 
 export const authApi = {
-    register: (data: { name: string; email: string; password: string }) =>
+    register: (data: { name: string; studentId: string; email: string; password: string }) =>
         fetchApi<AuthResponse>('/auth/register', {
             method: 'POST',
             body: JSON.stringify(data),
@@ -151,6 +152,27 @@ export const placementApi = {
         fetchApi<Placement>('/placements', {
             method: 'POST',
             body: JSON.stringify(data),
+            token,
+        }),
+};
+
+// User APIs (Admin only)
+export interface UserInfo {
+    id: string;
+    studentId: string;
+    name: string;
+    email: string;
+    role: 'ADMIN' | 'STUDENT';
+}
+
+export const usersApi = {
+    getAllStudents: (token: string) =>
+        fetchApi<UserInfo[]>('/users/students', { token }),
+
+    updateStudentId: (token: string, userId: string, studentId: string) =>
+        fetchApi<UserInfo>(`/users/${userId}/student-id`, {
+            method: 'PUT',
+            body: JSON.stringify({ studentId }),
             token,
         }),
 };

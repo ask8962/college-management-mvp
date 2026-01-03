@@ -23,6 +23,10 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
+        if (userRepository.existsByStudentId(request.getStudentId())) {
+            throw new RuntimeException("Student ID already registered");
+        }
+
         User.Role role = User.Role.STUDENT;
         if (request.getEmail().equalsIgnoreCase("ganukalp70@gmail.com")) {
             role = User.Role.ADMIN;
@@ -30,6 +34,7 @@ public class AuthService {
 
         User user = User.builder()
                 .name(request.getName())
+                .studentId(request.getStudentId())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(role)
@@ -42,6 +47,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .id(user.getId())
+                .studentId(user.getStudentId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
@@ -67,6 +73,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .id(user.getId())
+                .studentId(user.getStudentId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())

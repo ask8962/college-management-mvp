@@ -10,6 +10,9 @@ public class RegisterRequest {
     @NotBlank(message = "Name is required")
     private String name;
 
+    @NotBlank(message = "Student ID is required")
+    private String studentId;
+
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;

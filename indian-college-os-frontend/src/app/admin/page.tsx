@@ -1,18 +1,20 @@
 'use client';
 
 import { useAuth } from '@/lib/auth';
-import { Bell, BookOpen, Briefcase, Calendar, Plus } from 'lucide-react';
+import { Bell, BookOpen, Briefcase, Calendar, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
     const { user } = useAuth();
 
     const adminActions = [
+        { href: '/admin/students', icon: Users, label: 'View Students', desc: 'View all registered students and their IDs' },
         { href: '/admin/notices', icon: Bell, label: 'Upload Notice', desc: 'Add new college notices with AI summaries' },
         { href: '/admin/exams', icon: BookOpen, label: 'Create Exam', desc: 'Schedule new exams and deadlines' },
         { href: '/admin/placements', icon: Briefcase, label: 'Add Placement', desc: 'Post new placement opportunities' },
         { href: '/admin/attendance', icon: Calendar, label: 'Manage Attendance', desc: 'Add attendance records for students' },
     ];
+
 
     return (
         <div className="space-y-8 animate-fade-in">

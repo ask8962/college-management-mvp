@@ -13,7 +13,8 @@ import {
     LogOut,
     Plus,
     Settings,
-    User
+    User,
+    Zap
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         { href: '/dashboard/notices', icon: Bell, label: 'Notices' },
         { href: '/dashboard/exams', icon: BookOpen, label: 'Exams' },
         { href: '/dashboard/placements', icon: Briefcase, label: 'Placements' },
+        { href: '/dashboard/hustle', icon: Zap, label: '🔥 Hustle' },
     ];
 
     const adminLinks = [
@@ -77,8 +79,8 @@ export default function Sidebar({ onLogout }: SidebarProps) {
                             key={link.href}
                             href={link.href}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                                    ? 'bg-primary-500/20 text-primary-300'
-                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-primary-500/20 text-primary-300'
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             <link.icon className="h-5 w-5" />

@@ -244,3 +244,50 @@ export const usersApi = {
         }),
 };
 
+// Gig APIs (Assignment Hustle)
+export interface Gig {
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+    budget: number;
+    contactInfo: string;
+    postedBy: string;
+    postedByName: string;
+    status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    createdAt: string;
+    deadline: string | null;
+    isOwner: boolean;
+}
+
+export const gigApi = {
+    getAll: (token: string) =>
+        fetchApi<Gig[]>('/gigs', { token }),
+
+    getByCategory: (token: string, category: string) =>
+        fetchApi<Gig[]>(`/gigs/category/${category}`, { token }),
+
+    getMyGigs: (token: string) =>
+        fetchApi<Gig[]>('/gigs/my', { token }),
+
+    create: (token: string, data: { title: string; description: string; category: string; budget: number; contactInfo: string; deadline?: string }) =>
+        fetchApi<Gig>('/gigs', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    updateStatus: (token: string, id: string, status: string) =>
+        fetchApi<Gig>(`/gigs/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+            token,
+        }),
+
+    delete: (token: string, id: string) =>
+        fetchApi<void>(`/gigs/${id}`, {
+            method: 'DELETE',
+            token,
+        }),
+};
+

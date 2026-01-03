@@ -291,3 +291,55 @@ export const gigApi = {
         }),
 };
 
+// Professor Review APIs (Rate My Khadoos)
+export interface ProfessorReview {
+    id: string;
+    professorName: string;
+    department: string;
+    subject: string;
+    chillFactor: number;
+    attendanceStrictness: number;
+    marksGenerosity: number;
+    teachingQuality: number;
+    overallRating: number;
+    review: string;
+    createdAt: string;
+}
+
+export interface ProfessorStats {
+    professorName: string;
+    department: string;
+    reviewCount: number;
+    avgChillFactor: number;
+    avgAttendanceStrictness: number;
+    avgMarksGenerosity: number;
+    avgTeachingQuality: number;
+    overallRating: number;
+}
+
+export const professorReviewApi = {
+    getAll: (token: string) =>
+        fetchApi<ProfessorReview[]>('/reviews', { token }),
+
+    search: (token: string, name: string) =>
+        fetchApi<ProfessorReview[]>(`/reviews/search?name=${encodeURIComponent(name)}`, { token }),
+
+    getStats: (token: string) =>
+        fetchApi<ProfessorStats[]>('/reviews/stats', { token }),
+
+    create: (token: string, data: {
+        professorName: string;
+        department: string;
+        subject?: string;
+        chillFactor: number;
+        attendanceStrictness: number;
+        marksGenerosity: number;
+        teachingQuality: number;
+        review?: string;
+    }) =>
+        fetchApi<ProfessorReview>('/reviews', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            token,
+        }),
+};

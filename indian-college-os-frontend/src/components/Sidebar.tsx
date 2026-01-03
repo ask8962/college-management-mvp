@@ -14,7 +14,8 @@ import {
     Plus,
     Settings,
     User,
-    Zap
+    Zap,
+    Star
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,6 +34,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         { href: '/dashboard/exams', icon: BookOpen, label: 'Exams' },
         { href: '/dashboard/placements', icon: Briefcase, label: 'Placements' },
         { href: '/dashboard/hustle', icon: Zap, label: '🔥 Hustle' },
+        { href: '/dashboard/ratings', icon: Star, label: '⭐ Rate Profs' },
     ];
 
     const adminLinks = [

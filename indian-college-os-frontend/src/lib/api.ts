@@ -343,3 +343,34 @@ export const professorReviewApi = {
             token,
         }),
 };
+
+// Attendance Alert APIs (Flash Mob)
+export interface AttendanceAlert {
+    id: string;
+    subject: string;
+    location: string;
+    message: string;
+    postedByName: string;
+    createdAt: string;
+    minutesAgo: number;
+    minutesLeft: number;
+    isUrgent: boolean;
+}
+
+export const alertApi = {
+    getActive: (token: string) =>
+        fetchApi<AttendanceAlert[]>('/alerts', { token }),
+
+    create: (token: string, data: { subject: string; location: string; message?: string }) =>
+        fetchApi<AttendanceAlert>('/alerts', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    deactivate: (token: string, id: string) =>
+        fetchApi<void>(`/alerts/${id}`, {
+            method: 'DELETE',
+            token,
+        }),
+};

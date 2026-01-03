@@ -15,7 +15,8 @@ import {
     Settings,
     User,
     Zap,
-    Star
+    Star,
+    AlertTriangle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         { href: '/dashboard/placements', icon: Briefcase, label: 'Placements' },
         { href: '/dashboard/hustle', icon: Zap, label: '🔥 Hustle' },
         { href: '/dashboard/ratings', icon: Star, label: '⭐ Rate Profs' },
+        { href: '/dashboard/alerts', icon: AlertTriangle, label: '🚨 Flash Alert' },
     ];
 
     const adminLinks = [

@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { noticeApi, examApi, placementApi, attendanceApi, Notice, Exam, Placement, AttendanceRecord } from '@/lib/api';
 import NoticeCard from '@/components/NoticeCard';
 import ExamCard from '@/components/ExamCard';
 import PlacementCard from '@/components/PlacementCard';
-import { Calendar, Bell, BookOpen, Briefcase, TrendingUp } from 'lucide-react';
+import BunkManager from '@/components/BunkManager';
+import { Bell, BookOpen, Briefcase, TrendingUp } from 'lucide-react';
 
 export default function DashboardPage() {
     const { user, token } = useAuth();
@@ -16,43 +17,34 @@ export default function DashboardPage() {
     const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!token) return;
+    const fetchData = useCallback(async () => {
+        if (!token) return;
 
-            try {
-                const [noticesData, examsData, placementsData, attendanceData] = await Promise.all([
-                    noticeApi.getAll(token).catch(() => []),
-                    examApi.getUpcoming(token).catch(() => []),
-                    placementApi.getActive(token).catch(() => []),
-                    attendanceApi.getMyAttendance(token).catch(() => []),
-                ]);
+        // Don't set loading to true here to avoid flickering on updates
+        try {
+            const [noticesData, examsData, placementsData, attendanceData] = await Promise.all([
+                noticeApi.getAll(token).catch(() => []),
+                examApi.getUpcoming(token).catch(() => []),
+                placementApi.getActive(token).catch(() => []),
+                attendanceApi.getMyAttendance(token).catch(() => []),
+            ]);
 
-                setNotices(noticesData.slice(0, 3));
-                setExams(examsData.slice(0, 3));
-                setPlacements(placementsData.slice(0, 3));
-                setAttendance(attendanceData);
-            } catch (error) {
-                console.error('Failed to fetch data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
+            setNotices(noticesData.slice(0, 3));
+            setExams(examsData.slice(0, 3));
+            setPlacements(placementsData.slice(0, 3));
+            setAttendance(attendanceData);
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+        } finally {
+            setLoading(false);
+        }
     }, [token]);
 
-    // Calculate overall attendance
-    const calculateOverallAttendance = () => {
-        if (attendance.length === 0) return 0;
-        const present = attendance.filter(a => a.status === 'PRESENT').length;
-        return Math.round((present / attendance.length) * 100);
-    };
-
-    const overallAttendance = calculateOverallAttendance();
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const stats = [
-        { icon: Calendar, label: 'Attendance', value: `${overallAttendance}%`, color: overallAttendance >= 75 ? 'text-green-400' : 'text-red-400' },
         { icon: BookOpen, label: 'Upcoming Exams', value: exams.length, color: 'text-primary-400' },
         { icon: Bell, label: 'New Notices', value: notices.length, color: 'text-accent-400' },
         { icon: Briefcase, label: 'Active Placements', value: placements.length, color: 'text-orange-400' },
@@ -74,20 +66,29 @@ export default function DashboardPage() {
                 <p className="text-gray-400">Here&apos;s what&apos;s happening in your college</p>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
-                    <div key={index} className="glass rounded-2xl p-6 card-hover">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-white/10 rounded-lg">
-                                <stat.icon className={`h-6 w-6 ${stat.color}`} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Bunk-o-Meter Widget (Takes 1 column on large screens) */}
+                <div className="lg:col-span-1">
+                    <BunkManager attendance={attendance} onUpdate={fetchData} />
+                </div>
+
+                {/* Other Stats (Takes 2 columns) */}
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 content-start">
+                    {stats.map((stat, index) => (
+                        <div key={index} className="glass rounded-2xl p-6 card-hover flex flex-col justify-between h-full">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="p-2 bg-white/10 rounded-lg">
+                                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                                </div>
+                                <TrendingUp className="h-4 w-4 text-gray-500" />
                             </div>
-                            <TrendingUp className="h-4 w-4 text-gray-500" />
+                            <div>
+                                <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                                <p className="text-gray-400 text-sm mt-1">{stat.label}</p>
+                            </div>
                         </div>
-                        <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-                        <p className="text-gray-400 text-sm mt-1">{stat.label}</p>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
 
             {/* Latest Notices */}

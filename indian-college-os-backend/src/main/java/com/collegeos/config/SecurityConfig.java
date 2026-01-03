@@ -36,7 +36,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Admin only endpoints
-                        .requestMatchers(HttpMethod.POST, "/attendance/**").hasRole("ADMIN")
+                        // POST /attendance is now allowed for students (self-tracking)
                         .requestMatchers(HttpMethod.POST, "/notices/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/exams/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/placements/**").hasRole("ADMIN")

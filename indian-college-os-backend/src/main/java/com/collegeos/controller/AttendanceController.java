@@ -21,8 +21,18 @@ public class AttendanceController {
     private final JwtUtil jwtUtil;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AttendanceResponse> create(@Valid @RequestBody AttendanceRequest request) {
+    public ResponseEntity<AttendanceResponse> create(
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody AttendanceRequest request) {
+        String token = authHeader.substring(7);
+        String role = jwtUtil.extractRole(token);
+
+        if ("STUDENT".equals(role)) {
+            // Force studentId to be the logged-in user's ID
+            String studentId = jwtUtil.extractStudentId(token);
+            request.setStudentId(studentId);
+        }
+
         return ResponseEntity.ok(attendanceService.create(request));
     }
 

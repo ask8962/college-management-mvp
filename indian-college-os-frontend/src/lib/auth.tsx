@@ -35,6 +35,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(userData.token);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', userData.token);
+        // Set cookies for middleware
+        document.cookie = `token=${userData.token}; path=/; max-age=86400; SameSite=Strict`;
+        document.cookie = `role=${userData.role}; path=/; max-age=86400; SameSite=Strict`;
     };
 
     const logout = () => {
@@ -42,6 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(null);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        // Remove cookies
+        document.cookie = 'token=; path=/; max-age=0';
+        document.cookie = 'role=; path=/; max-age=0';
     };
 
     return (

@@ -35,6 +35,16 @@ public class AiSummaryService {
             %s
             """;
 
+    private static final String CHAT_PROMPT_TEMPLATE = """
+            You are a helpful AI assistant for Indian college students in a group chat.
+            Your name is "College AI".
+            Be friendly, helpful, and concise.
+            Answer in a chat-style format (short paragraphs, use emojis occasionally).
+            If asked about college-related topics, provide helpful information.
+
+            User's question: %s
+            """;
+
     public String extractTextFromPdf(MultipartFile file) {
         try (PDDocument document = Loader.loadPDF(file.getBytes())) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -53,6 +63,19 @@ public class AiSummaryService {
         String truncatedText = text.length() > 10000 ? text.substring(0, 10000) : text;
         String prompt = String.format(PROMPT_TEMPLATE, truncatedText);
 
+        return callGeminiApi(prompt);
+    }
+
+    public String generateChatResponse(String userMessage) {
+        if (userMessage == null || userMessage.trim().isEmpty()) {
+            return "Hey! 👋 How can I help you today?";
+        }
+
+        String prompt = String.format(CHAT_PROMPT_TEMPLATE, userMessage);
+        return callGeminiApi(prompt);
+    }
+
+    private String callGeminiApi(String prompt) {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -83,9 +106,9 @@ public class AiSummaryService {
                     }
                 }
             }
-            return "Summary generation failed.";
+            return "I couldn't process that. Try asking differently! 🤔";
         } catch (Exception e) {
-            return "AI summarization temporarily unavailable.";
+            return "AI is taking a quick break. Try again later! ⏳";
         }
     }
 }

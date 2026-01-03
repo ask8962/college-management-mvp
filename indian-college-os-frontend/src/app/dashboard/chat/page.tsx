@@ -218,10 +218,12 @@ export default function ChatPage() {
                                 >
                                     <div
                                         className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.type === 'SYSTEM'
-                                            ? 'bg-gray-500/20 text-gray-400 text-center mx-auto text-sm'
-                                            : msg.isOwn
-                                                ? 'bg-primary-500/30 rounded-br-sm'
-                                                : 'bg-white/10 rounded-bl-sm'
+                                                ? 'bg-gray-500/20 text-gray-400 text-center mx-auto text-sm'
+                                                : msg.senderRole === 'AI'
+                                                    ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 rounded-bl-sm'
+                                                    : msg.isOwn
+                                                        ? 'bg-primary-500/30 rounded-br-sm'
+                                                        : 'bg-white/10 rounded-bl-sm'
                                             }`}
                                     >
                                         {msg.type !== 'SYSTEM' && !msg.isOwn && (
@@ -232,9 +234,14 @@ export default function ChatPage() {
                                                         Admin
                                                     </span>
                                                 )}
+                                                {msg.senderRole === 'AI' && (
+                                                    <span className="px-1.5 py-0.5 bg-cyan-500/30 text-cyan-300 rounded-full text-[10px]">
+                                                        AI
+                                                    </span>
+                                                )}
                                             </p>
                                         )}
-                                        <p className="break-words">{msg.content}</p>
+                                        <p className="break-words whitespace-pre-wrap">{msg.content}</p>
                                         <p className="text-[10px] text-gray-500 text-right mt-1">
                                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
@@ -248,22 +255,27 @@ export default function ChatPage() {
                     {/* Message Input */}
                     <div className="p-4 border-t border-white/10">
                         {selectedRoom.canSendMessage ? (
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={newMessage}
-                                    onChange={e => setNewMessage(e.target.value)}
-                                    onKeyPress={e => e.key === 'Enter' && handleSend()}
-                                    placeholder="Type a message..."
-                                    className="flex-1 input-field"
-                                />
-                                <button
-                                    onClick={handleSend}
-                                    disabled={!newMessage.trim()}
-                                    className="btn-primary px-4 disabled:opacity-50"
-                                >
-                                    <Send className="h-5 w-5" />
-                                </button>
+                            <div className="space-y-2">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newMessage}
+                                        onChange={e => setNewMessage(e.target.value)}
+                                        onKeyPress={e => e.key === 'Enter' && handleSend()}
+                                        placeholder="Type a message... (use @AI to ask AI)"
+                                        className="flex-1 input-field"
+                                    />
+                                    <button
+                                        onClick={handleSend}
+                                        disabled={!newMessage.trim()}
+                                        className="btn-primary px-4 disabled:opacity-50"
+                                    >
+                                        <Send className="h-5 w-5" />
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                    💡 Tip: Type <span className="text-cyan-400 font-medium">@AI</span> followed by your question to get AI help!
+                                </p>
                             </div>
                         ) : (
                             <div className="text-center py-3 bg-orange-500/20 rounded-xl text-orange-400">

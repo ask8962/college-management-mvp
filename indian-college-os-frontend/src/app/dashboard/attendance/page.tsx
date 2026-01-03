@@ -1,20 +1,20 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { attendanceApi, AttendanceRecord } from '@/lib/api';
-import { Calendar, TrendingUp, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 export default function AttendancePage() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadAttendance = async () => {
-            if (!token || !user?.studentId) return;
+            if (!token) return;
             try {
-                const data = await attendanceApi.getByStudent(token, user.studentId);
+                const data = await attendanceApi.getMyAttendance(token);
                 setRecords(data);
             } catch (error) {
                 console.error('Failed to load attendance:', error);
@@ -23,7 +23,7 @@ export default function AttendancePage() {
             }
         };
         loadAttendance();
-    }, [token, user?.studentId]);
+    }, [token]);
 
     const totalClasses = records.length;
     const presentCount = records.filter(r => r.status === 'PRESENT').length;

@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { statsApi, DashboardStats, noticeApi, Notice, examApi, Exam } from '@/lib/api';
+import { noticeApi, Notice, examApi, Exam } from '@/lib/api';
 import { Calendar, BookOpen, Bell, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
     const { token, user } = useAuth();
-    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [recentNotices, setRecentNotices] = useState<Notice[]>([]);
     const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
@@ -17,12 +16,10 @@ export default function DashboardPage() {
         const loadData = async () => {
             if (!token) return;
             try {
-                const [statsData, notices, exams] = await Promise.all([
-                    statsApi.getDashboard(token),
+                const [notices, exams] = await Promise.all([
                     noticeApi.getAll(token),
                     examApi.getAll(token)
                 ]);
-                setStats(statsData);
                 setRecentNotices(notices.slice(0, 3));
                 setUpcomingExams(exams.filter(e => new Date(e.date) > new Date()).slice(0, 3));
             } catch (error) {
@@ -58,55 +55,55 @@ export default function DashboardPage() {
                 <p className="page-subtitle">Here's an overview of your academic activity.</p>
             </div>
 
-            {/* Stats Grid */}
+            {/* Quick Links */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="stat-card">
+                <Link href="/dashboard/attendance" className="stat-card hover:border-primary-500 transition-colors">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
                             <Calendar className="w-5 h-5 text-primary-500" />
                         </div>
                         <div>
-                            <div className="stat-value">{stats?.attendancePercentage ?? '—'}%</div>
-                            <div className="stat-label">Attendance</div>
+                            <div className="font-semibold text-neutral-900">Attendance</div>
+                            <div className="text-sm text-neutral-500">View records</div>
                         </div>
                     </div>
-                </div>
+                </Link>
 
-                <div className="stat-card">
+                <Link href="/dashboard/exams" className="stat-card hover:border-primary-500 transition-colors">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded bg-green-50 flex items-center justify-center">
                             <BookOpen className="w-5 h-5 text-success-600" />
                         </div>
                         <div>
-                            <div className="stat-value">{stats?.upcomingExams ?? 0}</div>
-                            <div className="stat-label">Upcoming Exams</div>
+                            <div className="font-semibold text-neutral-900">Exams</div>
+                            <div className="text-sm text-neutral-500">{upcomingExams.length} upcoming</div>
                         </div>
                     </div>
-                </div>
+                </Link>
 
-                <div className="stat-card">
+                <Link href="/dashboard/notices" className="stat-card hover:border-primary-500 transition-colors">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded bg-yellow-50 flex items-center justify-center">
                             <Bell className="w-5 h-5 text-warning-600" />
                         </div>
                         <div>
-                            <div className="stat-value">{stats?.totalNotices ?? 0}</div>
-                            <div className="stat-label">Notices</div>
+                            <div className="font-semibold text-neutral-900">Notices</div>
+                            <div className="text-sm text-neutral-500">View all</div>
                         </div>
                     </div>
-                </div>
+                </Link>
 
-                <div className="stat-card">
+                <Link href="/dashboard/placements" className="stat-card hover:border-primary-500 transition-colors">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded bg-purple-50 flex items-center justify-center">
                             <ClipboardList className="w-5 h-5 text-purple-600" />
                         </div>
                         <div>
-                            <div className="stat-value">{stats?.totalPlacements ?? 0}</div>
-                            <div className="stat-label">Placements</div>
+                            <div className="font-semibold text-neutral-900">Placements</div>
+                            <div className="text-sm text-neutral-500">Opportunities</div>
                         </div>
                     </div>
-                </div>
+                </Link>
             </div>
 
             {/* Two Column Layout */}

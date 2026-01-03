@@ -29,6 +29,10 @@ public class User {
 
     private Role role;
 
+    // 2FA fields
+    private boolean twoFactorEnabled;
+    private String twoFactorSecret;
+
     public enum Role {
         ADMIN, STUDENT
     }

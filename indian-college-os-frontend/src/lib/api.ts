@@ -44,12 +44,13 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
 
 // Auth APIs
 export interface AuthResponse {
-    token: string;
-    id: string;
-    studentId: string;
-    name: string;
+    token?: string;
+    id?: string;
+    studentId?: string;
+    name?: string;
     email: string;
-    role: 'ADMIN' | 'STUDENT';
+    role?: 'ADMIN' | 'STUDENT';
+    twoFactorRequired?: boolean;
 }
 
 export const authApi = {
@@ -59,12 +60,44 @@ export const authApi = {
             body: JSON.stringify(data),
         }),
 
-    login: (data: { email: string; password: string }) =>
+    login: (data: { email: string; password: string; twoFactorCode?: string }) =>
         fetchApi<AuthResponse>('/auth/login', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
 };
+
+// 2FA APIs
+export interface TwoFactorSetup {
+    secret: string;
+    qrCodeDataUri: string;
+}
+
+export const twoFactorApi = {
+    getStatus: (token: string) =>
+        fetchApi<{ enabled: boolean }>('/auth/2fa/status', { token }),
+
+    setup: (token: string) =>
+        fetchApi<TwoFactorSetup>('/auth/2fa/setup', {
+            method: 'POST',
+            token,
+        }),
+
+    verify: (token: string, code: string) =>
+        fetchApi<{ success: boolean; message: string }>('/auth/2fa/verify', {
+            method: 'POST',
+            body: JSON.stringify({ code }),
+            token,
+        }),
+
+    disable: (token: string, code: string) =>
+        fetchApi<{ success: boolean; message: string }>('/auth/2fa/disable', {
+            method: 'POST',
+            body: JSON.stringify({ code }),
+            token,
+        }),
+};
+
 
 // Attendance APIs
 export interface AttendanceRecord {

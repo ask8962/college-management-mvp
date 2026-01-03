@@ -12,4 +12,7 @@ public class LoginRequest {
 
     @NotBlank(message = "Password is required")
     private String password;
+
+    // Optional 2FA code
+    private String twoFactorCode;
 }

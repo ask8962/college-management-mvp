@@ -21,7 +21,8 @@ import {
     Sun,
     Moon,
     MessageSquare,
-    Target
+    Target,
+    Shield
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -44,6 +45,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
         { href: '/dashboard/ratings', icon: Star, label: '⭐ Rate Profs' },
         { href: '/dashboard/alerts', icon: AlertTriangle, label: '🚨 Flash Alert' },
         { href: '/dashboard/chat', icon: MessageSquare, label: '💬 Chat' },
+        { href: '/dashboard/security', icon: Shield, label: '🔒 Security' },
     ];
 
     const adminLinks = [

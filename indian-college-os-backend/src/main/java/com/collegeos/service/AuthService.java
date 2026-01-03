@@ -17,6 +17,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final TwoFactorService twoFactorService;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -38,6 +39,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(role)
+                .twoFactorEnabled(false)
                 .build();
 
         user = userRepository.save(user);
@@ -51,6 +53,7 @@ public class AuthService {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .twoFactorRequired(false)
                 .build();
     }
 
@@ -68,6 +71,23 @@ public class AuthService {
             user = userRepository.save(user);
         }
 
+        // Check if 2FA is enabled
+        if (user.isTwoFactorEnabled()) {
+            // If 2FA code is provided, verify it
+            if (request.getTwoFactorCode() != null && !request.getTwoFactorCode().isEmpty()) {
+                boolean isValid = twoFactorService.verifyCode(user.getTwoFactorSecret(), request.getTwoFactorCode());
+                if (!isValid) {
+                    throw new RuntimeException("Invalid 2FA code");
+                }
+            } else {
+                // Return response indicating 2FA is required
+                return AuthResponse.builder()
+                        .twoFactorRequired(true)
+                        .email(user.getEmail())
+                        .build();
+            }
+        }
+
         String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name(), user.getStudentId());
 
         return AuthResponse.builder()
@@ -77,6 +97,7 @@ public class AuthService {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .twoFactorRequired(false)
                 .build();
     }
 }

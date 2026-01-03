@@ -374,3 +374,27 @@ export const alertApi = {
             token,
         }),
 };
+
+// Activity APIs (Streak & Heatmap)
+export interface Activity {
+    currentStreak: number;
+    longestStreak: number;
+    totalActiveDays: number;
+    totalXP: number;
+    level: string;
+    xpToNextLevel: number;
+    badges: string[];
+    heatmapData: Record<string, number>;
+    checkedInToday: boolean;
+}
+
+export const activityApi = {
+    get: (token: string) =>
+        fetchApi<Activity>('/activity', { token }),
+
+    checkIn: (token: string) =>
+        fetchApi<Activity>('/activity/checkin', {
+            method: 'POST',
+            token,
+        }),
+};

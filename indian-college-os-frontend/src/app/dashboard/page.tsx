@@ -7,6 +7,7 @@ import NoticeCard from '@/components/NoticeCard';
 import ExamCard from '@/components/ExamCard';
 import PlacementCard from '@/components/PlacementCard';
 import BunkManager from '@/components/BunkManager';
+import StreakCard from '@/components/StreakCard';
 import { Bell, BookOpen, Briefcase, TrendingUp } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -90,6 +91,9 @@ export default function DashboardPage() {
                     ))}
                 </div>
             </div>
+
+            {/* Activity Streak & Heatmap */}
+            <StreakCard />
 
             {/* Latest Notices */}
             <section>

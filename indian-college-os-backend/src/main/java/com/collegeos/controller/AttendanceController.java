@@ -45,7 +45,7 @@ public class AttendanceController {
     public ResponseEntity<List<AttendanceResponse>> getMyAttendance(
             @RequestHeader("Authorization") String authHeader) {
         String token = authHeader.substring(7);
-        String studentId = jwtUtil.extractUserId(token);
+        String studentId = jwtUtil.extractStudentId(token);
         return ResponseEntity.ok(attendanceService.getByStudentId(studentId));
     }
 

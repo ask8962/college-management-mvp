@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
+import AlertNotifier from '@/components/AlertNotifier';
 
 export default function DashboardLayout({
     children,
@@ -38,6 +39,7 @@ export default function DashboardLayout({
 
     return (
         <div className="min-h-screen">
+            <AlertNotifier />
             <Sidebar onLogout={handleLogout} />
             <main className="ml-64 p-8">
                 {children}

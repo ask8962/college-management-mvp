@@ -1,5 +1,5 @@
 import { Notice } from '@/lib/api';
-import { ExternalLink, FileText } from 'lucide-react';
+import { ExternalLink, FileText, Download } from 'lucide-react';
 
 interface NoticeCardProps {
     notice: Notice;
@@ -12,6 +12,18 @@ export default function NoticeCard({ notice }: NoticeCardProps) {
             month: 'short',
             year: 'numeric',
         });
+    };
+
+    // Check if file is a PDF
+    const isPDF = notice.fileUrl?.toLowerCase().includes('.pdf') ||
+        notice.fileUrl?.toLowerCase().includes('/pdf/');
+
+    // Use Google Docs Viewer for PDFs (works better than direct Cloudinary PDF viewing)
+    const getViewUrl = () => {
+        if (isPDF) {
+            return `https://docs.google.com/viewer?url=${encodeURIComponent(notice.fileUrl)}&embedded=true`;
+        }
+        return notice.fileUrl;
     };
 
     return (
@@ -29,21 +41,49 @@ export default function NoticeCard({ notice }: NoticeCardProps) {
             </div>
 
             <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-400 mb-2">AI Summary</h4>
+                <h4 className="text-sm font-medium text-gray-400 mb-2 flex items-center gap-2">
+                    🤖 AI Summary
+                </h4>
                 <div className="text-gray-300 text-sm whitespace-pre-wrap bg-white/5 rounded-xl p-4">
-                    {notice.summary}
+                    {notice.summary || 'No summary available'}
                 </div>
             </div>
 
-            <a
-                href={notice.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors font-medium"
-            >
-                <ExternalLink className="h-4 w-4" />
-                View PDF
-            </a>
+            <div className="flex gap-3">
+                {isPDF ? (
+                    <>
+                        <a
+                            href={getViewUrl()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors font-medium"
+                        >
+                            <ExternalLink className="h-4 w-4" />
+                            View PDF
+                        </a>
+                        <a
+                            href={notice.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors font-medium"
+                        >
+                            <Download className="h-4 w-4" />
+                            Download
+                        </a>
+                    </>
+                ) : (
+                    <a
+                        href={notice.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors font-medium"
+                    >
+                        <ExternalLink className="h-4 w-4" />
+                        View File
+                    </a>
+                )}
+            </div>
         </div>
     );
 }

@@ -398,3 +398,60 @@ export const activityApi = {
             token,
         }),
 };
+
+// Chat APIs (Broadcast Chat)
+export interface ChatRoom {
+    id: string;
+    name: string;
+    description: string;
+    createdBy: string;
+    broadcastMode: boolean;
+    memberCount: number;
+    createdAt: string;
+    canSendMessage: boolean;
+}
+
+export interface ChatMessage {
+    id: string;
+    roomId: string;
+    senderId: string;
+    senderName: string;
+    senderRole: string;
+    content: string;
+    type: string;
+    fileUrl?: string;
+    fileName?: string;
+    createdAt: string;
+    isOwn: boolean;
+}
+
+export const chatApi = {
+    getRooms: (token: string) =>
+        fetchApi<ChatRoom[]>('/chat/rooms', { token }),
+
+    getRoom: (token: string, roomId: string) =>
+        fetchApi<ChatRoom>(`/chat/rooms/${roomId}`, { token }),
+
+    createRoom: (token: string, data: { name: string; description?: string; broadcastMode: boolean }) =>
+        fetchApi<ChatRoom>('/chat/rooms', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    toggleBroadcast: (token: string, roomId: string) =>
+        fetchApi<ChatRoom>(`/chat/rooms/${roomId}/broadcast`, {
+            method: 'PATCH',
+            token,
+        }),
+
+    getMessages: (token: string, roomId: string) =>
+        fetchApi<ChatMessage[]>(`/chat/rooms/${roomId}/messages`, { token }),
+
+    sendMessage: (token: string, roomId: string, data: { content: string; type?: string; fileUrl?: string; fileName?: string }) =>
+        fetchApi<ChatMessage>(`/chat/rooms/${roomId}/messages`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+            token,
+        }),
+};

@@ -33,6 +33,11 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
         throw new Error(error.message || 'Request failed');
     }
 
+    // Handle 204 No Content
+    if (response.status === 204) {
+        return {} as T;
+    }
+
     return response.json();
 }
 
@@ -74,10 +79,26 @@ export const attendanceApi = {
     getMyAttendance: (token: string) =>
         fetchApi<AttendanceRecord[]>('/attendance', { token }),
 
+    getAll: (token: string) =>
+        fetchApi<AttendanceRecord[]>('/attendance/all', { token }),
+
     create: (token: string, data: Omit<AttendanceRecord, 'id'>) =>
         fetchApi<AttendanceRecord>('/attendance', {
             method: 'POST',
             body: JSON.stringify(data),
+            token,
+        }),
+
+    update: (token: string, id: string, data: Omit<AttendanceRecord, 'id'>) =>
+        fetchApi<AttendanceRecord>(`/attendance/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    delete: (token: string, id: string) =>
+        fetchApi<void>(`/attendance/${id}`, {
+            method: 'DELETE',
             token,
         }),
 };
@@ -106,6 +127,26 @@ export const noticeApi = {
             token,
         });
     },
+
+    update: (token: string, id: string, title: string, file?: File) => {
+        const formData = new FormData();
+        formData.append('title', title);
+        if (file) {
+            formData.append('file', file);
+        }
+
+        return fetchApi<Notice>(`/notices/${id}`, {
+            method: 'PUT',
+            body: formData,
+            token,
+        });
+    },
+
+    delete: (token: string, id: string) =>
+        fetchApi<void>(`/notices/${id}`, {
+            method: 'DELETE',
+            token,
+        }),
 };
 
 // Exam APIs
@@ -128,6 +169,19 @@ export const examApi = {
         fetchApi<Exam>('/exams', {
             method: 'POST',
             body: JSON.stringify(data),
+            token,
+        }),
+
+    update: (token: string, id: string, data: Omit<Exam, 'id'>) =>
+        fetchApi<Exam>(`/exams/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    delete: (token: string, id: string) =>
+        fetchApi<void>(`/exams/${id}`, {
+            method: 'DELETE',
             token,
         }),
 };
@@ -154,6 +208,19 @@ export const placementApi = {
             body: JSON.stringify(data),
             token,
         }),
+
+    update: (token: string, id: string, data: Omit<Placement, 'id'>) =>
+        fetchApi<Placement>(`/placements/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            token,
+        }),
+
+    delete: (token: string, id: string) =>
+        fetchApi<void>(`/placements/${id}`, {
+            method: 'DELETE',
+            token,
+        }),
 };
 
 // User APIs (Admin only)
@@ -176,3 +243,4 @@ export const usersApi = {
             token,
         }),
 };
+

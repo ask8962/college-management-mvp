@@ -1,129 +1,256 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { placementApi } from '@/lib/api';
-import { Briefcase, CheckCircle } from 'lucide-react';
+import { placementApi, Placement } from '@/lib/api';
+import { Plus, Edit, Trash2, ArrowLeft, X, Briefcase } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminPlacementsPage() {
     const { token } = useAuth();
-    const [companyName, setCompanyName] = useState('');
-    const [role, setRole] = useState('');
-    const [eligibility, setEligibility] = useState('');
-    const [deadline, setDeadline] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
+    const [placements, setPlacements] = useState<Placement[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const [editingPlacement, setEditingPlacement] = useState<Placement | null>(null);
+    const [formData, setFormData] = useState({
+        companyName: '',
+        role: '',
+        eligibility: '',
+        deadline: '',
+    });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!token) return;
+    useEffect(() => {
+        if (token) {
+            loadPlacements();
+        }
+    }, [token]);
 
-        setLoading(true);
-        setError('');
-        setSuccess(false);
-
+    const loadPlacements = async () => {
         try {
-            await placementApi.create(token, {
-                companyName,
-                role,
-                eligibility,
-                deadline,
-            });
-            setSuccess(true);
-            setCompanyName('');
-            setRole('');
-            setEligibility('');
-            setDeadline('');
+            const data = await placementApi.getAll(token!);
+            setPlacements(data);
         } catch (err: any) {
-            setError(err.message || 'Failed to add placement');
+            setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        try {
+            if (editingPlacement) {
+                await placementApi.update(token!, editingPlacement.id, formData);
+            } else {
+                await placementApi.create(token!, formData);
+            }
+            setShowModal(false);
+            setEditingPlacement(null);
+            resetForm();
+            loadPlacements();
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this placement?')) return;
+
+        try {
+            await placementApi.delete(token!, id);
+            loadPlacements();
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+
+    const openEditModal = (placement: Placement) => {
+        setEditingPlacement(placement);
+        setFormData({
+            companyName: placement.companyName,
+            role: placement.role,
+            eligibility: placement.eligibility,
+            deadline: placement.deadline,
+        });
+        setShowModal(true);
+    };
+
+    const openCreateModal = () => {
+        setEditingPlacement(null);
+        resetForm();
+        setShowModal(true);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            companyName: '',
+            role: '',
+            eligibility: '',
+            deadline: '',
+        });
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-2xl space-y-6 animate-fade-in">
-            <div className="flex items-center gap-3">
-                <div className="p-3 bg-accent-500/20 rounded-xl">
-                    <Briefcase className="h-8 w-8 text-accent-300" />
+        <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Link href="/admin" className="p-2 glass rounded-xl hover:bg-white/10 transition-colors">
+                        <ArrowLeft className="h-5 w-5" />
+                    </Link>
+                    <div>
+                        <h1 className="text-3xl font-bold">Manage Placements</h1>
+                        <p className="text-gray-400">Create, edit, and delete placement drives</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-3xl font-bold">Add Placement Drive</h1>
-                    <p className="text-gray-400">Post new placement opportunities for students</p>
-                </div>
+                <button
+                    onClick={openCreateModal}
+                    className="btn-primary flex items-center gap-2"
+                >
+                    <Plus className="h-5 w-5" />
+                    Add Placement
+                </button>
             </div>
 
-            <div className="glass rounded-2xl p-8">
-                {success && (
-                    <div className="flex items-center gap-3 bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-3 rounded-xl mb-6">
-                        <CheckCircle className="h-5 w-5" />
-                        Placement drive added successfully!
-                    </div>
-                )}
+            {error && (
+                <div className="p-4 glass rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+                    {error}
+                </div>
+            )}
 
-                {error && (
-                    <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6">
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Company Name</label>
-                        <input
-                            type="text"
-                            value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
-                            required
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-primary-500 transition-colors"
-                            placeholder="e.g., Google, Microsoft, TCS"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Role</label>
-                        <input
-                            type="text"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            required
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-primary-500 transition-colors"
-                            placeholder="e.g., Software Engineer, Data Analyst"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Eligibility Criteria</label>
-                        <input
-                            type="text"
-                            value={eligibility}
-                            onChange={(e) => setEligibility(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:border-primary-500 transition-colors"
-                            placeholder="e.g., CGPA > 7.0, CSE & IT branches only"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Application Deadline</label>
-                        <input
-                            type="date"
-                            value={deadline}
-                            onChange={(e) => setDeadline(e.target.value)}
-                            required
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:border-primary-500 transition-colors"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full btn-primary flex items-center justify-center gap-2"
-                    >
-                        {loading ? <div className="spinner"></div> : 'Add Placement Drive'}
-                    </button>
-                </form>
+            <div className="glass rounded-2xl overflow-hidden">
+                <table className="w-full">
+                    <thead className="bg-white/5">
+                        <tr>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Company</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Role</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Eligibility</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Deadline</th>
+                            <th className="px-6 py-4 text-right text-sm font-semibold text-gray-300">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                        {placements.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                                    <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                    No placements found. Click "Add Placement" to create one.
+                                </td>
+                            </tr>
+                        ) : (
+                            placements.map((placement) => (
+                                <tr key={placement.id} className="hover:bg-white/5 transition-colors">
+                                    <td className="px-6 py-4 font-medium">{placement.companyName}</td>
+                                    <td className="px-6 py-4 text-gray-400">{placement.role}</td>
+                                    <td className="px-6 py-4 text-gray-400 max-w-xs truncate">{placement.eligibility}</td>
+                                    <td className="px-6 py-4 text-gray-400">{placement.deadline}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => openEditModal(placement)}
+                                                className="p-2 rounded-lg hover:bg-white/10 text-cyan-400 transition-colors"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(placement.id)}
+                                                className="p-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
+
+            {/* Modal */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="glass rounded-2xl p-6 w-full max-w-md animate-slide-up">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold">
+                                {editingPlacement ? 'Edit Placement' : 'Add New Placement'}
+                            </h2>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
+                                <input
+                                    type="text"
+                                    value={formData.companyName}
+                                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                                    className="input-field"
+                                    placeholder="e.g., Google, Microsoft"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
+                                <input
+                                    type="text"
+                                    value={formData.role}
+                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                    className="input-field"
+                                    placeholder="e.g., Software Engineer"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Eligibility</label>
+                                <textarea
+                                    value={formData.eligibility}
+                                    onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
+                                    className="input-field min-h-[80px]"
+                                    placeholder="e.g., B.Tech CSE, 7+ CGPA"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Deadline</label>
+                                <input
+                                    type="date"
+                                    value={formData.deadline}
+                                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                                    className="input-field"
+                                    required
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowModal(false)}
+                                    className="btn-secondary flex-1"
+                                >
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary flex-1">
+                                    {editingPlacement ? 'Update' : 'Create'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

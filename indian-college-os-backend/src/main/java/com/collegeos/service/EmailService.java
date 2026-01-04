@@ -1,5 +1,6 @@
 package com.collegeos.service;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:noreply@collegeos.com}")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
     @Value("${app.frontend-url:http://localhost:3000}")
@@ -26,12 +27,33 @@ public class EmailService {
     @Value("${app.name:College OS}")
     private String appName;
 
+    private boolean configured = false;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
+    @PostConstruct
+    public void init() {
+        if (fromEmail != null && !fromEmail.isEmpty() && !fromEmail.equals("noreply@collegeos.com")) {
+            configured = true;
+            log.info("✅ Email service configured with: {}", fromEmail);
+        } else {
+            log.warn("⚠️ Email service not configured. Set SMTP_USERNAME environment variable to enable emails.");
+        }
+    }
+
+    public boolean isConfigured() {
+        return configured;
+    }
+
     @Async
     public void sendVerificationEmail(String toEmail, String token) {
+        if (!configured) {
+            log.warn("⚠️ Email not configured. Skipping verification email to: {}", toEmail);
+            return;
+        }
+
         String subject = "Verify your email - " + appName;
         String verifyUrl = frontendUrl + "/verify-email?token=" + token;
 
@@ -74,6 +96,11 @@ public class EmailService {
 
     @Async
     public void sendPasswordResetEmail(String toEmail, String token) {
+        if (!configured) {
+            log.warn("⚠️ Email not configured. Skipping password reset email to: {}", toEmail);
+            return;
+        }
+
         String subject = "Reset your password - " + appName;
         String resetUrl = frontendUrl + "/reset-password?token=" + token;
 
@@ -130,7 +157,10 @@ public class EmailService {
             log.info("✅ Email sent successfully to: {}", to);
         } catch (MessagingException e) {
             log.error("❌ Failed to send email to {}: {}", to, e.getMessage());
-            throw new EmailException("Failed to send email: " + e.getMessage(), e);
+            // Don't throw - let the operation continue
+        } catch (Exception e) {
+            log.error("❌ Unexpected error sending email to {}: {}", to, e.getMessage());
+            // Don't throw - let the operation continue
         }
     }
 

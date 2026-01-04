@@ -45,6 +45,9 @@ public class AuthService {
             role = User.Role.ADMIN;
         }
 
+        // Check if email service is configured
+        boolean emailConfigured = emailService.isConfigured();
+
         // Generate email verification token
         String verificationToken = jwtUtil.generateEmailVerificationToken(request.getEmail());
 
@@ -55,32 +58,46 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(role)
                 .twoFactorEnabled(false)
-                .emailVerified(false)
-                .emailVerificationToken(verificationToken)
-                .emailVerificationExpiry(LocalDateTime.now().plusHours(24))
+                // Auto-verify if email is not configured
+                .emailVerified(!emailConfigured)
+                .emailVerificationToken(emailConfigured ? verificationToken : null)
+                .emailVerificationExpiry(emailConfigured ? LocalDateTime.now().plusHours(24) : null)
                 .build();
 
         user = userRepository.save(user);
 
-        // Send verification email
-        try {
+        // Send verification email if configured
+        if (emailConfigured) {
             emailService.sendVerificationEmail(user.getEmail(), verificationToken);
-            log.info("Verification email sent to: {}", user.getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send verification email: {}", e.getMessage());
-            // Don't fail registration if email fails
-        }
+            log.info("Verification email queued for: {}", user.getEmail());
 
-        // Return response indicating email verification is required
-        return AuthResponse.builder()
-                .id(user.getId())
-                .studentId(user.getStudentId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .emailVerificationRequired(true)
-                .twoFactorRequired(false)
-                .build();
+            // Return response indicating email verification is required
+            return AuthResponse.builder()
+                    .id(user.getId())
+                    .studentId(user.getStudentId())
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .role(user.getRole())
+                    .emailVerificationRequired(true)
+                    .twoFactorRequired(false)
+                    .build();
+        } else {
+            // Email not configured - user is auto-verified, generate token and login
+            log.info("Email not configured - user auto-verified: {}", user.getEmail());
+            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name(),
+                    user.getStudentId());
+
+            return AuthResponse.builder()
+                    .token(token)
+                    .id(user.getId())
+                    .studentId(user.getStudentId())
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .role(user.getRole())
+                    .twoFactorRequired(false)
+                    .emailVerificationRequired(false)
+                    .build();
+        }
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -97,8 +114,8 @@ public class AuthService {
             user = userRepository.save(user);
         }
 
-        // Check if email is verified
-        if (!user.isEmailVerified()) {
+        // Check if email is verified (only if email service is configured)
+        if (!user.isEmailVerified() && emailService.isConfigured()) {
             return AuthResponse.builder()
                     .emailVerificationRequired(true)
                     .email(user.getEmail())
@@ -137,6 +154,11 @@ public class AuthService {
     public MessageResponse forgotPassword(ForgotPasswordRequest request) {
         log.info("Password reset requested for: {}", request.getEmail());
 
+        // Check if email is configured
+        if (!emailService.isConfigured()) {
+            return MessageResponse.error("Password reset is not available. Please contact the administrator.");
+        }
+
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
         // Always return success to prevent email enumeration
@@ -152,12 +174,8 @@ public class AuthService {
         userRepository.save(user);
 
         // Send reset email
-        try {
-            emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
-            log.info("Password reset email sent to: {}", user.getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send password reset email: {}", e.getMessage());
-        }
+        emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
+        log.info("Password reset email queued for: {}", user.getEmail());
 
         return MessageResponse.success("If your email is registered, you will receive a password reset link.");
     }
@@ -235,6 +253,11 @@ public class AuthService {
     public MessageResponse resendVerification(String email) {
         log.info("Resending verification email to: {}", email);
 
+        // Check if email is configured
+        if (!emailService.isConfigured()) {
+            return MessageResponse.error("Email service is not configured. Please contact the administrator.");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthException("Email not found"));
 
@@ -249,13 +272,8 @@ public class AuthService {
         userRepository.save(user);
 
         // Send verification email
-        try {
-            emailService.sendVerificationEmail(email, verificationToken);
-            log.info("Verification email resent to: {}", email);
-        } catch (Exception e) {
-            log.error("Failed to send verification email: {}", e.getMessage());
-            throw new AuthException("Failed to send verification email. Please try again.");
-        }
+        emailService.sendVerificationEmail(email, verificationToken);
+        log.info("Verification email resent to: {}", email);
 
         return MessageResponse.success("Verification email sent. Please check your inbox.");
     }

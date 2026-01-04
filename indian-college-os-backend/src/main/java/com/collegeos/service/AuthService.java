@@ -1,11 +1,8 @@
 package com.collegeos.service;
 
-import com.collegeos.dto.request.ForgotPasswordRequest;
 import com.collegeos.dto.request.LoginRequest;
 import com.collegeos.dto.request.RegisterRequest;
-import com.collegeos.dto.request.ResetPasswordRequest;
 import com.collegeos.dto.response.AuthResponse;
-import com.collegeos.dto.response.MessageResponse;
 import com.collegeos.model.User;
 import com.collegeos.repository.UserRepository;
 import com.collegeos.security.JwtUtil;
@@ -14,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +22,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final TwoFactorService twoFactorService;
-    private final EmailService emailService;
 
     public AuthResponse register(RegisterRequest request) {
         log.info("Registering new user: {}", request.getEmail());
@@ -45,12 +39,6 @@ public class AuthService {
             role = User.Role.ADMIN;
         }
 
-        // Check if email service is configured
-        boolean emailConfigured = emailService.isConfigured();
-
-        // Generate email verification token
-        String verificationToken = jwtUtil.generateEmailVerificationToken(request.getEmail());
-
         User user = User.builder()
                 .name(request.getName())
                 .studentId(request.getStudentId())
@@ -58,46 +46,21 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(role)
                 .twoFactorEnabled(false)
-                // Auto-verify if email is not configured
-                .emailVerified(!emailConfigured)
-                .emailVerificationToken(emailConfigured ? verificationToken : null)
-                .emailVerificationExpiry(emailConfigured ? LocalDateTime.now().plusHours(24) : null)
                 .build();
 
         user = userRepository.save(user);
 
-        // Send verification email if configured
-        if (emailConfigured) {
-            emailService.sendVerificationEmail(user.getEmail(), verificationToken);
-            log.info("Verification email queued for: {}", user.getEmail());
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name(), user.getStudentId());
 
-            // Return response indicating email verification is required
-            return AuthResponse.builder()
-                    .id(user.getId())
-                    .studentId(user.getStudentId())
-                    .name(user.getName())
-                    .email(user.getEmail())
-                    .role(user.getRole())
-                    .emailVerificationRequired(true)
-                    .twoFactorRequired(false)
-                    .build();
-        } else {
-            // Email not configured - user is auto-verified, generate token and login
-            log.info("Email not configured - user auto-verified: {}", user.getEmail());
-            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name(),
-                    user.getStudentId());
-
-            return AuthResponse.builder()
-                    .token(token)
-                    .id(user.getId())
-                    .studentId(user.getStudentId())
-                    .name(user.getName())
-                    .email(user.getEmail())
-                    .role(user.getRole())
-                    .twoFactorRequired(false)
-                    .emailVerificationRequired(false)
-                    .build();
-        }
+        return AuthResponse.builder()
+                .token(token)
+                .id(user.getId())
+                .studentId(user.getStudentId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorRequired(false)
+                .build();
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -112,14 +75,6 @@ public class AuthService {
         if (user.getEmail().equalsIgnoreCase("ganukalp70@gmail.com") && user.getRole() != User.Role.ADMIN) {
             user.setRole(User.Role.ADMIN);
             user = userRepository.save(user);
-        }
-
-        // Check if email is verified (only if email service is configured)
-        if (!user.isEmailVerified() && emailService.isConfigured()) {
-            return AuthResponse.builder()
-                    .emailVerificationRequired(true)
-                    .email(user.getEmail())
-                    .build();
         }
 
         // Check if 2FA is enabled
@@ -147,135 +102,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .twoFactorRequired(false)
-                .emailVerificationRequired(false)
                 .build();
-    }
-
-    public MessageResponse forgotPassword(ForgotPasswordRequest request) {
-        log.info("Password reset requested for: {}", request.getEmail());
-
-        // Check if email is configured
-        if (!emailService.isConfigured()) {
-            return MessageResponse.error("Password reset is not available. Please contact the administrator.");
-        }
-
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-
-        // Always return success to prevent email enumeration
-        if (user == null) {
-            log.warn("Password reset requested for non-existent email: {}", request.getEmail());
-            return MessageResponse.success("If your email is registered, you will receive a password reset link.");
-        }
-
-        // Generate reset token
-        String resetToken = jwtUtil.generatePasswordResetToken(user.getEmail());
-        user.setPasswordResetToken(resetToken);
-        user.setPasswordResetExpiry(LocalDateTime.now().plusMinutes(15));
-        userRepository.save(user);
-
-        // Send reset email
-        emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
-        log.info("Password reset email queued for: {}", user.getEmail());
-
-        return MessageResponse.success("If your email is registered, you will receive a password reset link.");
-    }
-
-    public MessageResponse resetPassword(ResetPasswordRequest request) {
-        log.info("Processing password reset");
-
-        // Validate token
-        if (!jwtUtil.isPasswordResetToken(request.getToken())) {
-            throw new AuthException("Invalid or expired reset token");
-        }
-
-        String email = jwtUtil.extractEmail(request.getToken());
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AuthException("Invalid reset token"));
-
-        // Verify token matches stored token
-        if (user.getPasswordResetToken() == null || !user.getPasswordResetToken().equals(request.getToken())) {
-            throw new AuthException("Invalid or expired reset token");
-        }
-
-        // Check expiry
-        if (user.getPasswordResetExpiry() == null || user.getPasswordResetExpiry().isBefore(LocalDateTime.now())) {
-            throw new AuthException("Reset token has expired");
-        }
-
-        // Update password
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setPasswordResetToken(null);
-        user.setPasswordResetExpiry(null);
-        userRepository.save(user);
-
-        log.info("Password reset successful for: {}", email);
-        return MessageResponse
-                .success("Password has been reset successfully. You can now login with your new password.");
-    }
-
-    public MessageResponse verifyEmail(String token) {
-        log.info("Processing email verification");
-
-        // Validate token
-        if (!jwtUtil.isEmailVerificationToken(token)) {
-            throw new AuthException("Invalid or expired verification token");
-        }
-
-        String email = jwtUtil.extractEmail(token);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AuthException("Invalid verification token"));
-
-        if (user.isEmailVerified()) {
-            return MessageResponse.success("Email is already verified. You can login now.");
-        }
-
-        // Verify token matches stored token
-        if (user.getEmailVerificationToken() == null || !user.getEmailVerificationToken().equals(token)) {
-            throw new AuthException("Invalid or expired verification token");
-        }
-
-        // Check expiry
-        if (user.getEmailVerificationExpiry() == null
-                || user.getEmailVerificationExpiry().isBefore(LocalDateTime.now())) {
-            throw new AuthException("Verification token has expired. Please request a new one.");
-        }
-
-        // Verify email
-        user.setEmailVerified(true);
-        user.setEmailVerificationToken(null);
-        user.setEmailVerificationExpiry(null);
-        userRepository.save(user);
-
-        log.info("Email verified for: {}", email);
-        return MessageResponse.success("Email verified successfully! You can now login.");
-    }
-
-    public MessageResponse resendVerification(String email) {
-        log.info("Resending verification email to: {}", email);
-
-        // Check if email is configured
-        if (!emailService.isConfigured()) {
-            return MessageResponse.error("Email service is not configured. Please contact the administrator.");
-        }
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AuthException("Email not found"));
-
-        if (user.isEmailVerified()) {
-            return MessageResponse.success("Email is already verified.");
-        }
-
-        // Generate new verification token
-        String verificationToken = jwtUtil.generateEmailVerificationToken(email);
-        user.setEmailVerificationToken(verificationToken);
-        user.setEmailVerificationExpiry(LocalDateTime.now().plusHours(24));
-        userRepository.save(user);
-
-        // Send verification email
-        emailService.sendVerificationEmail(email, verificationToken);
-        log.info("Verification email resent to: {}", email);
-
-        return MessageResponse.success("Verification email sent. Please check your inbox.");
     }
 
     /**

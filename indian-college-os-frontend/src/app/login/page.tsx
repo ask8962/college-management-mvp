@@ -5,17 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { authApi } from '@/lib/api';
-import { Shield, Mail, RefreshCw } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [twoFactorCode, setTwoFactorCode] = useState('');
     const [show2FA, setShow2FA] = useState(false);
-    const [showVerificationRequired, setShowVerificationRequired] = useState(false);
-    const [verificationEmail, setVerificationEmail] = useState('');
-    const [resendLoading, setResendLoading] = useState(false);
-    const [resendMessage, setResendMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
@@ -32,13 +28,6 @@ export default function LoginPage() {
                 password,
                 twoFactorCode: show2FA ? twoFactorCode : undefined
             });
-
-            if (response.emailVerificationRequired) {
-                setVerificationEmail(response.email);
-                setShowVerificationRequired(true);
-                setLoading(false);
-                return;
-            }
 
             if (response.twoFactorRequired) {
                 setShow2FA(true);
@@ -59,84 +48,6 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
-
-    const handleResendVerification = async () => {
-        setResendLoading(true);
-        setResendMessage('');
-        try {
-            const response = await authApi.resendVerification(verificationEmail);
-            setResendMessage(response.message);
-        } catch (err: any) {
-            setResendMessage(err.message || 'Failed to resend. Please try again.');
-        } finally {
-            setResendLoading(false);
-        }
-    };
-
-    // Email verification required state
-    if (showVerificationRequired) {
-        return (
-            <div className="min-h-screen bg-neutral-50 flex flex-col">
-                <header className="h-16 bg-white border-b border-neutral-200">
-                    <div className="container-narrow h-full flex items-center">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded bg-primary-500 flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">CO</span>
-                            </div>
-                            <span className="font-semibold text-neutral-900">College OS</span>
-                        </Link>
-                    </div>
-                </header>
-
-                <main className="flex-1 flex items-center justify-center py-12 px-4">
-                    <div className="w-full max-w-sm">
-                        <div className="card text-center">
-                            <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-4">
-                                <Mail className="w-6 h-6 text-warning-600" />
-                            </div>
-                            <h1 className="text-xl font-semibold text-neutral-900 mb-2">
-                                Verify Your Email
-                            </h1>
-                            <p className="text-sm text-neutral-600 mb-6">
-                                We sent a verification link to <strong>{verificationEmail}</strong>.
-                                Please check your inbox and click the link to activate your account.
-                            </p>
-
-                            {resendMessage && (
-                                <div className="alert alert-info mb-4">
-                                    {resendMessage}
-                                </div>
-                            )}
-
-                            <button
-                                onClick={handleResendVerification}
-                                disabled={resendLoading}
-                                className="btn btn-secondary w-full mb-3"
-                            >
-                                {resendLoading ? <div className="spinner"></div> : (
-                                    <>
-                                        <RefreshCw className="w-4 h-4" />
-                                        Resend Verification Email
-                                    </>
-                                )}
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    setShowVerificationRequired(false);
-                                    setEmail('');
-                                    setPassword('');
-                                }}
-                                className="text-sm text-primary-500 hover:underline"
-                            >
-                                ← Try a different account
-                            </button>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-neutral-50 flex flex-col">
@@ -202,12 +113,6 @@ export default function LoginPage() {
                                             className="input-field"
                                             placeholder="Enter your password"
                                         />
-                                    </div>
-
-                                    <div className="text-right">
-                                        <Link href="/forgot-password" className="text-sm text-primary-500 hover:underline">
-                                            Forgot password?
-                                        </Link>
                                     </div>
                                 </>
                             ) : (

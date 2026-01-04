@@ -20,4 +20,7 @@ public class AuthResponse {
 
     // 2FA
     private boolean twoFactorRequired;
+
+    // Email verification
+    private boolean emailVerificationRequired;
 }

@@ -8,6 +8,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.Indexed;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -32,6 +34,16 @@ public class User {
     // 2FA fields
     private boolean twoFactorEnabled;
     private String twoFactorSecret;
+
+    // Email verification fields
+    @Builder.Default
+    private boolean emailVerified = false;
+    private String emailVerificationToken;
+    private LocalDateTime emailVerificationExpiry;
+
+    // Password reset fields
+    private String passwordResetToken;
+    private LocalDateTime passwordResetExpiry;
 
     public enum Role {
         ADMIN, STUDENT

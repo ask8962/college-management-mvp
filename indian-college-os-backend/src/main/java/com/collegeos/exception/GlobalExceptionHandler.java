@@ -2,7 +2,6 @@ package com.collegeos.exception;
 
 import com.collegeos.service.AuthService;
 import com.collegeos.service.CloudinaryService;
-import com.collegeos.service.EmailService;
 import com.collegeos.service.NoticeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +38,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleStorageException(CloudinaryService.StorageException ex) {
         log.error("Storage error: {}", ex.getMessage());
         return buildErrorResponse("File upload failed: " + ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
-    }
-
-    @ExceptionHandler(EmailService.EmailException.class)
-    public ResponseEntity<Map<String, Object>> handleEmailException(EmailService.EmailException ex) {
-        log.error("Email error: {}", ex.getMessage());
-        return buildErrorResponse("Failed to send email. Please try again.", HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

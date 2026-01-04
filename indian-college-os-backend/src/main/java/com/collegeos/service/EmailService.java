@@ -1,24 +1,27 @@
 package com.collegeos.service;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
-    private final JavaMailSender mailSender;
+    @Value("${resend.api-key:}")
+    private String resendApiKey;
 
-    @Value("${spring.mail.username:}")
+    @Value("${resend.from-email:onboarding@resend.dev}")
     private String fromEmail;
 
     @Value("${app.frontend-url:http://localhost:3000}")
@@ -28,18 +31,15 @@ public class EmailService {
     private String appName;
 
     private boolean configured = false;
-
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @PostConstruct
     public void init() {
-        if (fromEmail != null && !fromEmail.isEmpty() && !fromEmail.equals("noreply@collegeos.com")) {
+        if (resendApiKey != null && !resendApiKey.isEmpty()) {
             configured = true;
-            log.info("✅ Email service configured with: {}", fromEmail);
+            log.info("✅ Resend email service configured");
         } else {
-            log.warn("⚠️ Email service not configured. Set SMTP_USERNAME environment variable to enable emails.");
+            log.warn("⚠️ Email service not configured. Set RESEND_API_KEY environment variable to enable emails.");
         }
     }
 
@@ -54,15 +54,15 @@ public class EmailService {
             return;
         }
 
-        String subject = "Verify your email - " + appName;
         String verifyUrl = frontendUrl + "/verify-email?token=" + token;
+        String subject = "Verify your email - " + appName;
 
         String htmlContent = """
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <style>
-                        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #171717; }
+                        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #171717; margin: 0; padding: 0; }
                         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
                         .header { text-align: center; margin-bottom: 30px; }
                         .logo { font-size: 24px; font-weight: bold; color: #1e40af; }
@@ -91,7 +91,7 @@ public class EmailService {
                 """
                 .formatted(appName, verifyUrl, appName);
 
-        sendHtmlEmail(toEmail, subject, htmlContent);
+        sendEmail(toEmail, subject, htmlContent);
     }
 
     @Async
@@ -101,15 +101,15 @@ public class EmailService {
             return;
         }
 
-        String subject = "Reset your password - " + appName;
         String resetUrl = frontendUrl + "/reset-password?token=" + token;
+        String subject = "Reset your password - " + appName;
 
         String htmlContent = """
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <style>
-                        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #171717; }
+                        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #171717; margin: 0; padding: 0; }
                         .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
                         .header { text-align: center; margin-bottom: 30px; }
                         .logo { font-size: 24px; font-weight: bold; color: #1e40af; }
@@ -129,7 +129,7 @@ public class EmailService {
                             <a href="%s" class="button">Reset Password</a>
                         </p>
                         <div class="warning">
-                            <strong>⚠️ Security Notice:</strong> This link will expire in 15 minutes. If you didn't request a password reset, please ignore this email or contact support if you're concerned about your account security.
+                            <strong>⚠️ Security Notice:</strong> This link will expire in 15 minutes.
                         </div>
                         <div class="footer">
                             <p>© 2024 %s. All rights reserved.</p>
@@ -140,26 +140,32 @@ public class EmailService {
                 """
                 .formatted(appName, resetUrl, appName);
 
-        sendHtmlEmail(toEmail, subject, htmlContent);
+        sendEmail(toEmail, subject, htmlContent);
     }
 
-    private void sendHtmlEmail(String to, String subject, String htmlContent) {
+    private void sendEmail(String to, String subject, String htmlContent) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(resendApiKey);
 
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
+            Map<String, Object> body = new HashMap<>();
+            body.put("from", fromEmail);
+            body.put("to", to);
+            body.put("subject", subject);
+            body.put("html", htmlContent);
 
-            mailSender.send(message);
-            log.info("✅ Email sent successfully to: {}", to);
-        } catch (MessagingException e) {
-            log.error("❌ Failed to send email to {}: {}", to, e.getMessage());
-            // Don't throw - let the operation continue
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(RESEND_API_URL, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("✅ Email sent successfully to: {}", to);
+            } else {
+                log.error("❌ Failed to send email. Status: {}", response.getStatusCode());
+            }
         } catch (Exception e) {
-            log.error("❌ Unexpected error sending email to {}: {}", to, e.getMessage());
+            log.error("❌ Failed to send email to {}: {}", to, e.getMessage());
             // Don't throw - let the operation continue
         }
     }

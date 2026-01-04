@@ -60,11 +60,11 @@
             <scope>runtime</scope>
         </dependency>
         
-        <!-- Google Cloud Storage -->
+        <!-- Cloudinary for File Storage -->
         <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-storage</artifactId>
-            <version>2.30.1</version>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.36.0</version>
         </dependency>
         
         <!-- PDF Text Extraction -->

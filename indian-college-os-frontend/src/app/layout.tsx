@@ -4,8 +4,13 @@ import './globals.css';
 import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from '@/lib/theme';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+import BackendWarmup from '@/components/BackendWarmup';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+    subsets: ['latin'],
+    display: 'swap', // Faster font loading
+    preload: true,
+});
 
 export const metadata: Metadata = {
     title: 'Indian College OS - Student Management Platform',
@@ -24,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-    themeColor: '#6366f1',
+    themeColor: '#1e40af',
     width: 'device-width',
     initialScale: 1,
     maximumScale: 1,
@@ -42,10 +47,14 @@ export default function RootLayout({
                 <link rel="apple-touch-icon" href="/icon-192.png" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="mobile-web-app-capable" content="yes" />
+                {/* Preconnect to backend for faster API calls */}
+                <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL || 'https://college-management-mvp.onrender.com'} />
+                <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_API_URL || 'https://college-management-mvp.onrender.com'} />
             </head>
             <body className={inter.className}>
                 <ThemeProvider>
                     <AuthProvider>
+                        <BackendWarmup />
                         {children}
                         <ServiceWorkerRegistration />
                     </AuthProvider>

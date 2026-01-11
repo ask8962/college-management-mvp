@@ -7,26 +7,29 @@ import { useAuth } from '@/lib/auth';
 import { Plus, Search, DollarSign, Calendar, Tag } from 'lucide-react';
 
 export default function MarketplacePage() {
-    const { user } = useAuth();
+    const { user, token } = useAuth();
     const [gigs, setGigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
     const [search, setSearch] = useState('');
 
     useEffect(() => {
-        fetchGigs();
-    }, [filter]);
+        if (token) {
+            fetchGigs();
+        }
+    }, [filter, token]);
 
     const fetchGigs = async () => {
+        if (!token) return;
         setLoading(true);
         try {
             let data;
             if (filter === 'MY') {
-                data = await gigApi.getMyGigs();
+                data = await gigApi.getMyGigs(token);
             } else if (filter !== 'ALL') {
-                data = await gigApi.getByCategory(filter);
+                data = await gigApi.getByCategory(token, filter);
             } else {
-                data = await gigApi.getAll();
+                data = await gigApi.getAll(token);
             }
             setGigs(data);
         } catch (error) {
@@ -80,8 +83,8 @@ export default function MarketplacePage() {
                             key={cat}
                             onClick={() => setFilter(cat)}
                             className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${filter === cat
-                                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                                    : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white'
+                                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                                : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white'
                                 }`}
                         >
                             {cat === 'MY' ? 'My Gigs' : cat}

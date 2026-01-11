@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminExamsPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,14 +21,12 @@ export default function AdminExamsPage() {
     });
 
     useEffect(() => {
-        if (token) {
-            loadExams();
-        }
-    }, [token]);
+        loadExams();
+    }, []);
 
     const loadExams = async () => {
         try {
-            const data = await examApi.getAll(token!);
+            const data = await examApi.getAll();
             setExams(data);
         } catch (err: any) {
             setError(err.message);
@@ -43,9 +41,9 @@ export default function AdminExamsPage() {
 
         try {
             if (editingExam) {
-                await examApi.update(token!, editingExam.id, formData);
+                await examApi.update(editingExam.id, formData);
             } else {
-                await examApi.create(token!, formData);
+                await examApi.create(formData);
             }
             setShowModal(false);
             setEditingExam(null);
@@ -60,7 +58,7 @@ export default function AdminExamsPage() {
         if (!confirm('Are you sure you want to delete this exam?')) return;
 
         try {
-            await examApi.delete(token!, id);
+            await examApi.delete(id);
             loadExams();
         } catch (err: any) {
             setError(err.message);

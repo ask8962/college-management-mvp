@@ -9,7 +9,7 @@ interface BunkManagerProps {
 }
 
 export default function BunkManager({ attendance, onUpdate }: BunkManagerProps) {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [isMarking, setIsMarking] = useState(false);
     const [loading, setLoading] = useState(false);
     const [subject, setSubject] = useState('');
@@ -62,7 +62,7 @@ export default function BunkManager({ attendance, onUpdate }: BunkManagerProps) 
         setLoading(true);
 
         try {
-            await attendanceApi.create(token!, {
+            await attendanceApi.create({
                 studentId: 'SELF', // Backend handles this now
                 subject: subject,
                 date: new Date().toISOString().split('T')[0],
@@ -124,8 +124,8 @@ export default function BunkManager({ attendance, onUpdate }: BunkManagerProps) 
                             type="button"
                             onClick={() => setStatus('PRESENT')}
                             className={`flex-1 py-2 rounded-lg border transition-colors flex items-center justify-center gap-2 ${status === 'PRESENT'
-                                    ? 'bg-green-500/20 border-green-500 text-green-400'
-                                    : 'border-white/10 hover:bg-white/5 text-gray-400'
+                                ? 'bg-green-500/20 border-green-500 text-green-400'
+                                : 'border-white/10 hover:bg-white/5 text-gray-400'
                                 }`}
                         >
                             <CheckCircle className="h-4 w-4" /> Present
@@ -134,8 +134,8 @@ export default function BunkManager({ attendance, onUpdate }: BunkManagerProps) 
                             type="button"
                             onClick={() => setStatus('ABSENT')}
                             className={`flex-1 py-2 rounded-lg border transition-colors flex items-center justify-center gap-2 ${status === 'ABSENT'
-                                    ? 'bg-red-500/20 border-red-500 text-red-400'
-                                    : 'border-white/10 hover:bg-white/5 text-gray-400'
+                                ? 'bg-red-500/20 border-red-500 text-red-400'
+                                : 'border-white/10 hover:bg-white/5 text-gray-400'
                                 }`}
                         >
                             <XCircle className="h-4 w-4" /> Absent

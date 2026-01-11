@@ -21,7 +21,7 @@ const DEPARTMENTS = [
 ];
 
 export default function RatingsPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [stats, setStats] = useState<ProfessorStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -38,12 +38,12 @@ export default function RatingsPage() {
     });
 
     useEffect(() => {
-        if (token) loadStats();
-    }, [token]);
+        loadStats();
+    }, []);
 
     const loadStats = async () => {
         try {
-            const data = await professorReviewApi.getStats(token!);
+            const data = await professorReviewApi.getStats();
             setStats(data);
         } catch (error) {
             console.error('Failed to load stats:', error);
@@ -55,7 +55,7 @@ export default function RatingsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await professorReviewApi.create(token!, formData);
+            await professorReviewApi.create(formData);
             setShowForm(false);
             setFormData({
                 professorName: '',

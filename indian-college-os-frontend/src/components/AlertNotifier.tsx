@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { alertApi, AttendanceAlert } from '@/lib/api';
 
 export default function AlertNotifier() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const lastAlertIdRef = useRef<string | null>(null);
     const hasPermissionRef = useRef(false);
 
@@ -21,10 +21,10 @@ export default function AlertNotifier() {
     }, []);
 
     const checkAlerts = useCallback(async () => {
-        if (!token) return;
+        // Token check removed - using cookies
 
         try {
-            const alerts = await alertApi.getActive(token);
+            const alerts = await alertApi.getActive();
 
             if (alerts.length > 0) {
                 const latestAlert = alerts[0];
@@ -59,7 +59,7 @@ export default function AlertNotifier() {
         } catch (error) {
             // Silently fail - background process
         }
-    }, [token]);
+    }, [user]);
 
     useEffect(() => {
         // Initial check

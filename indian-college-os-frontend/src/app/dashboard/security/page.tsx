@@ -6,7 +6,7 @@ import { twoFactorApi, TwoFactorSetup } from '@/lib/api';
 import { Shield, ShieldCheck, ShieldOff, Key, Copy, Check } from 'lucide-react';
 
 export default function SecurityPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [isEnabled, setIsEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
     const [setupData, setSetupData] = useState<TwoFactorSetup | null>(null);
@@ -17,12 +17,12 @@ export default function SecurityPage() {
 
     useEffect(() => {
         loadStatus();
-    }, [token]);
+    }, [user]);
 
     const loadStatus = async () => {
-        if (!token) return;
+        // Token check removed - using cookies
         try {
-            const data = await twoFactorApi.getStatus(token);
+            const data = await twoFactorApi.getStatus();
             setIsEnabled(data.enabled);
         } catch (error) {
             console.error('Failed to load 2FA status:', error);
@@ -32,10 +32,10 @@ export default function SecurityPage() {
     };
 
     const handleSetup = async () => {
-        if (!token) return;
+        // Token check removed - using cookies
         setMessage('');
         try {
-            const data = await twoFactorApi.setup(token);
+            const data = await twoFactorApi.setup();
             setSetupData(data);
         } catch (error) {
             setMessage('Failed to setup 2FA. Please try again.');
@@ -43,10 +43,10 @@ export default function SecurityPage() {
     };
 
     const handleVerify = async () => {
-        if (!token || !code) return;
+        if (!code) return;
         setMessage('');
         try {
-            const data = await twoFactorApi.verify(token, code);
+            const data = await twoFactorApi.verify(code);
             if (data.success) {
                 setIsEnabled(true);
                 setSetupData(null);
@@ -61,10 +61,10 @@ export default function SecurityPage() {
     };
 
     const handleDisable = async () => {
-        if (!token || !code) return;
+        if (!code) return;
         setMessage('');
         try {
-            const data = await twoFactorApi.disable(token, code);
+            const data = await twoFactorApi.disable(code);
             if (data.success) {
                 setIsEnabled(false);
                 setShowDisable(false);

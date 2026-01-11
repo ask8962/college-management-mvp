@@ -7,18 +7,18 @@ import { Calendar, BookOpen, Bell, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-    const { token, user } = useAuth();
+    const { user } = useAuth();
     const [recentNotices, setRecentNotices] = useState<Notice[]>([]);
     const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
-            if (!token) return;
+            // Token check removed - using cookies
             try {
                 const [notices, exams] = await Promise.all([
-                    noticeApi.getAll(token),
-                    examApi.getAll(token)
+                    noticeApi.getAll(),
+                    examApi.getAll()
                 ]);
                 setRecentNotices(notices.slice(0, 3));
                 setUpcomingExams(exams.filter(e => new Date(e.examDate) > new Date()).slice(0, 3));
@@ -29,7 +29,7 @@ export default function DashboardPage() {
             }
         };
         loadData();
-    }, [token]);
+    }, [user]);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-IN', {

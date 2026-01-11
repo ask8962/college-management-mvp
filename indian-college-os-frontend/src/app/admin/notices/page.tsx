@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, Bell, ExternalLink, FileText } from '
 import Link from 'next/link';
 
 export default function AdminNoticesPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [notices, setNotices] = useState<Notice[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -20,14 +20,12 @@ export default function AdminNoticesPage() {
     });
 
     useEffect(() => {
-        if (token) {
-            loadNotices();
-        }
-    }, [token]);
+        loadNotices();
+    }, []);
 
     const loadNotices = async () => {
         try {
-            const data = await noticeApi.getAll(token!);
+            const data = await noticeApi.getAll();
             setNotices(data);
         } catch (err: any) {
             setError(err.message);
@@ -43,14 +41,14 @@ export default function AdminNoticesPage() {
 
         try {
             if (editingNotice) {
-                await noticeApi.update(token!, editingNotice.id, formData.title, formData.file || undefined);
+                await noticeApi.update(editingNotice.id, formData.title, formData.file || undefined);
             } else {
                 if (!formData.file) {
                     setError('Please select a file');
                     setSubmitting(false);
                     return;
                 }
-                await noticeApi.create(token!, formData.title, formData.file);
+                await noticeApi.create(formData.title, formData.file);
             }
             setShowModal(false);
             setEditingNotice(null);
@@ -67,7 +65,7 @@ export default function AdminNoticesPage() {
         if (!confirm('Are you sure you want to delete this notice?')) return;
 
         try {
-            await noticeApi.delete(token!, id);
+            await noticeApi.delete(id);
             loadNotices();
         } catch (err: any) {
             setError(err.message);

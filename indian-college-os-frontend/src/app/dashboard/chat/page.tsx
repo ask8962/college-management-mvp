@@ -6,7 +6,7 @@ import { chatApi, ChatRoom, ChatMessage } from '@/lib/api';
 import { Send, Plus, X, MessageSquare, Radio, Circle, Lock, Unlock, ArrowLeft, Users } from 'lucide-react';
 
 export default function ChatPage() {
-    const { token, user } = useAuth();
+    const { user } = useAuth();
     const [rooms, setRooms] = useState<ChatRoom[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,27 +18,27 @@ export default function ChatPage() {
     const isAdmin = user?.role === 'ADMIN';
 
     const loadRooms = useCallback(async () => {
-        if (!token) return;
+        // Token check removed - using cookies
         try {
-            const data = await chatApi.getRooms(token);
+            const data = await chatApi.getRooms();
             setRooms(data);
         } catch (error) {
             console.error('Failed to load rooms:', error);
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [user]);
 
     const loadMessages = useCallback(async () => {
-        if (!token || !selectedRoom) return;
+        if (!selectedRoom) return;
         try {
-            const data = await chatApi.getMessages(token, selectedRoom.id);
+            const data = await chatApi.getMessages(selectedRoom.id);
             setMessages(data);
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         } catch (error) {
             console.error('Failed to load messages:', error);
         }
-    }, [token, selectedRoom]);
+    }, [user, selectedRoom]);
 
     useEffect(() => {
         loadRooms();
@@ -54,9 +54,9 @@ export default function ChatPage() {
     }, [loadMessages, selectedRoom]);
 
     const handleSend = async () => {
-        if (!token || !selectedRoom || !newMessage.trim()) return;
+        if (!selectedRoom || !newMessage.trim()) return;
         try {
-            await chatApi.sendMessage(token, selectedRoom.id, { content: newMessage, type: 'TEXT' });
+            await chatApi.sendMessage(selectedRoom.id, { content: newMessage, type: 'TEXT' });
             setNewMessage('');
             loadMessages();
         } catch (error: any) {
@@ -65,9 +65,9 @@ export default function ChatPage() {
     };
 
     const handleToggleBroadcast = async () => {
-        if (!token || !selectedRoom) return;
+        if (!selectedRoom) return;
         try {
-            const updated = await chatApi.toggleBroadcast(token, selectedRoom.id);
+            const updated = await chatApi.toggleBroadcast(selectedRoom.id);
             setSelectedRoom(updated);
             loadRooms();
             loadMessages();
@@ -77,9 +77,9 @@ export default function ChatPage() {
     };
 
     const handleCreateRoom = async () => {
-        if (!token || !roomForm.name.trim()) return;
+        if (!roomForm.name.trim()) return;
         try {
-            await chatApi.createRoom(token, roomForm);
+            await chatApi.createRoom(roomForm);
             setShowCreateRoom(false);
             setRoomForm({ name: '', description: '', broadcastMode: true });
             loadRooms();
@@ -89,9 +89,9 @@ export default function ChatPage() {
     };
 
     const selectRoom = async (room: ChatRoom) => {
-        if (!token) return;
+        // Token check removed - using cookies
         try {
-            const fullRoom = await chatApi.getRoom(token, room.id);
+            const fullRoom = await chatApi.getRoom(room.id);
             setSelectedRoom(fullRoom);
         } catch (error) {
             console.error('Failed to get room:', error);
@@ -218,12 +218,12 @@ export default function ChatPage() {
                                 >
                                     <div
                                         className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.type === 'SYSTEM'
-                                                ? 'bg-gray-500/20 text-gray-400 text-center mx-auto text-sm'
-                                                : msg.senderRole === 'AI'
-                                                    ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 rounded-bl-sm'
-                                                    : msg.isOwn
-                                                        ? 'bg-primary-500/30 rounded-br-sm'
-                                                        : 'bg-white/10 rounded-bl-sm'
+                                            ? 'bg-gray-500/20 text-gray-400 text-center mx-auto text-sm'
+                                            : msg.senderRole === 'AI'
+                                                ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 rounded-bl-sm'
+                                                : msg.isOwn
+                                                    ? 'bg-primary-500/30 rounded-br-sm'
+                                                    : 'bg-white/10 rounded-bl-sm'
                                             }`}
                                     >
                                         {msg.type !== 'SYSTEM' && !msg.isOwn && (

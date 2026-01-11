@@ -9,7 +9,7 @@ const CATEGORIES = ['STUDY', 'ASSIGNMENT', 'PERSONAL', 'EXAM', 'OTHER'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function TasksPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [stats, setStats] = useState<TaskStats | null>(null);
     const [loading, setLoading] = useState(true);
@@ -24,12 +24,12 @@ export default function TasksPage() {
     });
 
     const loadTasks = useCallback(async () => {
-        if (!token) return;
+        // Token check removed - using cookies
         try {
             const completed = filter === 'all' ? undefined : filter === 'completed';
             const [tasksData, statsData] = await Promise.all([
-                taskApi.getAll(token, completed),
-                taskApi.getStats(token)
+                taskApi.getAll(completed),
+                taskApi.getStats()
             ]);
             setTasks(tasksData);
             setStats(statsData);
@@ -38,16 +38,16 @@ export default function TasksPage() {
         } finally {
             setLoading(false);
         }
-    }, [token, filter]);
+    }, [user, filter]);
 
     useEffect(() => {
         loadTasks();
     }, [loadTasks]);
 
     const handleCreate = async () => {
-        if (!token || !form.title.trim()) return;
+        if (!form.title.trim()) return;
         try {
-            await taskApi.create(token, {
+            await taskApi.create({
                 ...form,
                 dueDate: form.dueDate || undefined
             });
@@ -60,9 +60,9 @@ export default function TasksPage() {
     };
 
     const handleToggle = async (taskId: string) => {
-        if (!token) return;
+        // Token check removed - using cookies
         try {
-            await taskApi.toggle(token, taskId);
+            await taskApi.toggle(taskId);
             loadTasks();
         } catch (error) {
             console.error('Failed to toggle task:', error);
@@ -70,9 +70,9 @@ export default function TasksPage() {
     };
 
     const handleDelete = async (taskId: string) => {
-        if (!token) return;
+        // Token check removed - using cookies
         try {
-            await taskApi.delete(token, taskId);
+            await taskApi.delete(taskId);
             loadTasks();
         } catch (error) {
             console.error('Failed to delete task:', error);
@@ -172,8 +172,8 @@ export default function TasksPage() {
                                 <button
                                     onClick={() => handleToggle(task.id)}
                                     className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${task.completed
-                                            ? 'bg-success-500 border-success-500'
-                                            : 'border-neutral-300 hover:border-primary-500'
+                                        ? 'bg-success-500 border-success-500'
+                                        : 'border-neutral-300 hover:border-primary-500'
                                         }`}
                                 >
                                     {task.completed && <Check className="w-3 h-3 text-white" />}

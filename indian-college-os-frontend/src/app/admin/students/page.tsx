@@ -7,7 +7,7 @@ import { ArrowLeft, Users, Edit, X, Check } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminStudentsPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [students, setStudents] = useState<UserInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -15,14 +15,12 @@ export default function AdminStudentsPage() {
     const [editStudentId, setEditStudentId] = useState('');
 
     useEffect(() => {
-        if (token) {
-            loadStudents();
-        }
-    }, [token]);
+        loadStudents();
+    }, []);
 
     const loadStudents = async () => {
         try {
-            const data = await usersApi.getAllStudents(token!);
+            const data = await usersApi.getAllStudents();
             setStudents(data);
         } catch (err: any) {
             setError(err.message);
@@ -33,7 +31,7 @@ export default function AdminStudentsPage() {
 
     const handleUpdateStudentId = async (userId: string) => {
         try {
-            await usersApi.updateStudentId(token!, userId, editStudentId);
+            await usersApi.updateStudentId(userId, editStudentId);
             setEditingId(null);
             loadStudents();
         } catch (err: any) {
@@ -127,8 +125,8 @@ export default function AdminStudentsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${student.role === 'ADMIN'
-                                                ? 'bg-purple-500/20 text-purple-400'
-                                                : 'bg-cyan-500/20 text-cyan-400'
+                                            ? 'bg-purple-500/20 text-purple-400'
+                                            : 'bg-cyan-500/20 text-cyan-400'
                                             }`}>
                                             {student.role}
                                         </span>

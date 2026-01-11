@@ -6,16 +6,16 @@ import { examApi, Exam } from '@/lib/api';
 import { BookOpen } from 'lucide-react';
 
 export default function ExamsPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
 
     useEffect(() => {
         const loadExams = async () => {
-            if (!token) return;
+            // Token check removed - using cookies
             try {
-                const data = await examApi.getAll(token);
+                const data = await examApi.getAll();
                 setExams(data);
             } catch (error) {
                 console.error('Failed to load exams:', error);
@@ -24,7 +24,7 @@ export default function ExamsPage() {
             }
         };
         loadExams();
-    }, [token]);
+    }, [user]);
 
     const now = new Date();
     const filteredExams = exams.filter(exam => {

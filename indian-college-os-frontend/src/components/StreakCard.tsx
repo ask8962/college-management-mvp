@@ -14,18 +14,18 @@ const BADGE_INFO: Record<string, { icon: string; label: string; color: string }>
 };
 
 export default function StreakCard() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [activity, setActivity] = useState<Activity | null>(null);
     const [loading, setLoading] = useState(true);
     const [checking, setChecking] = useState(false);
 
     useEffect(() => {
-        if (token) loadActivity();
-    }, [token]);
+        loadActivity();
+    }, []);
 
     const loadActivity = async () => {
         try {
-            const data = await activityApi.get(token!);
+            const data = await activityApi.get();
             setActivity(data);
         } catch (error) {
             console.error('Failed to load activity:', error);
@@ -35,10 +35,10 @@ export default function StreakCard() {
     };
 
     const handleCheckIn = async () => {
-        if (!token || checking) return;
+        if (checking) return;
         setChecking(true);
         try {
-            const data = await activityApi.checkIn(token);
+            const data = await activityApi.checkIn();
             setActivity(data);
         } catch (error) {
             console.error('Check-in failed:', error);
@@ -172,8 +172,8 @@ export default function StreakCard() {
                                 <div
                                     key={`${weekIdx}-${dayIdx}`}
                                     className={`w-3 h-3 rounded-sm transition-colors ${day.count > 0
-                                            ? 'bg-green-500'
-                                            : 'bg-white/5'
+                                        ? 'bg-green-500'
+                                        : 'bg-white/5'
                                         }`}
                                     title={`${day.date}: ${day.count > 0 ? 'Active' : 'Inactive'}`}
                                 />

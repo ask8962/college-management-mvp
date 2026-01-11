@@ -6,15 +6,15 @@ import { placementApi, Placement } from '@/lib/api';
 import { Briefcase, Building2, Calendar, CheckCircle } from 'lucide-react';
 
 export default function PlacementsPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [placements, setPlacements] = useState<Placement[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadPlacements = async () => {
-            if (!token) return;
+            // Token check removed - using cookies
             try {
-                const data = await placementApi.getAll(token);
+                const data = await placementApi.getAll();
                 setPlacements(data);
             } catch (error) {
                 console.error('Failed to load placements:', error);
@@ -23,7 +23,7 @@ export default function PlacementsPage() {
             }
         };
         loadPlacements();
-    }, [token]);
+    }, [user]);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-IN', {

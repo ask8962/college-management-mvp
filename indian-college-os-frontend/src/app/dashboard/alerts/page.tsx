@@ -6,7 +6,7 @@ import { alertApi, AttendanceAlert } from '@/lib/api';
 import { Plus, X, MapPin, Clock, AlertTriangle, Bell, Vibrate } from 'lucide-react';
 
 export default function AlertsPage() {
-    const { token, user } = useAuth();
+    const { user } = useAuth();
     const [alerts, setAlerts] = useState<AttendanceAlert[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -17,9 +17,9 @@ export default function AlertsPage() {
     });
 
     const loadAlerts = useCallback(async () => {
-        if (!token) return;
+        // Token check removed - using cookies
         try {
-            const data = await alertApi.getActive(token);
+            const data = await alertApi.getActive();
             setAlerts(data);
 
             // Trigger vibration for urgent alerts on mobile
@@ -31,7 +31,7 @@ export default function AlertsPage() {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [user]);
 
     useEffect(() => {
         loadAlerts();
@@ -43,7 +43,7 @@ export default function AlertsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await alertApi.create(token!, formData);
+            await alertApi.create(formData);
             setShowForm(false);
             setFormData({ subject: '', location: '', message: '' });
             loadAlerts();
@@ -54,7 +54,7 @@ export default function AlertsPage() {
 
     const handleDeactivate = async (id: string) => {
         try {
-            await alertApi.deactivate(token!, id);
+            await alertApi.deactivate(id);
             loadAlerts();
         } catch (error) {
             alert('Failed to deactivate alert');

@@ -6,15 +6,15 @@ import { noticeApi, Notice } from '@/lib/api';
 import { Bell, FileText, ExternalLink, Download } from 'lucide-react';
 
 export default function NoticesPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [notices, setNotices] = useState<Notice[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadNotices = async () => {
-            if (!token) return;
+            // Token check removed - using cookies
             try {
-                const data = await noticeApi.getAll(token);
+                const data = await noticeApi.getAll();
                 setNotices(data);
             } catch (error) {
                 console.error('Failed to load notices:', error);
@@ -23,7 +23,7 @@ export default function NoticesPage() {
             }
         };
         loadNotices();
-    }, [token]);
+    }, [user]);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-IN', {

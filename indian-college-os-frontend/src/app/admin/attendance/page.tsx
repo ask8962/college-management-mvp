@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, Calendar } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminAttendancePage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,14 +21,12 @@ export default function AdminAttendancePage() {
     });
 
     useEffect(() => {
-        if (token) {
-            loadRecords();
-        }
-    }, [token]);
+        loadRecords();
+    }, []);
 
     const loadRecords = async () => {
         try {
-            const data = await attendanceApi.getAll(token!);
+            const data = await attendanceApi.getAll();
             setRecords(data);
         } catch (err: any) {
             setError(err.message);
@@ -43,9 +41,9 @@ export default function AdminAttendancePage() {
 
         try {
             if (editingRecord) {
-                await attendanceApi.update(token!, editingRecord.id, formData);
+                await attendanceApi.update(editingRecord.id, formData);
             } else {
-                await attendanceApi.create(token!, formData);
+                await attendanceApi.create(formData);
             }
             setShowModal(false);
             setEditingRecord(null);
@@ -60,7 +58,7 @@ export default function AdminAttendancePage() {
         if (!confirm('Are you sure you want to delete this attendance record?')) return;
 
         try {
-            await attendanceApi.delete(token!, id);
+            await attendanceApi.delete(id);
             loadRecords();
         } catch (err: any) {
             setError(err.message);
@@ -155,8 +153,8 @@ export default function AdminAttendancePage() {
                                     <td className="px-6 py-4 text-gray-400">{record.date}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${record.status === 'PRESENT'
-                                                ? 'bg-green-500/20 text-green-400'
-                                                : 'bg-red-500/20 text-red-400'
+                                            ? 'bg-green-500/20 text-green-400'
+                                            : 'bg-red-500/20 text-red-400'
                                             }`}>
                                             {record.status}
                                         </span>

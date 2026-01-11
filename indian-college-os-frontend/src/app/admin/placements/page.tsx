@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPlacementsPage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [placements, setPlacements] = useState<Placement[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,14 +21,12 @@ export default function AdminPlacementsPage() {
     });
 
     useEffect(() => {
-        if (token) {
-            loadPlacements();
-        }
-    }, [token]);
+        loadPlacements();
+    }, []);
 
     const loadPlacements = async () => {
         try {
-            const data = await placementApi.getAll(token!);
+            const data = await placementApi.getAll();
             setPlacements(data);
         } catch (err: any) {
             setError(err.message);
@@ -43,9 +41,9 @@ export default function AdminPlacementsPage() {
 
         try {
             if (editingPlacement) {
-                await placementApi.update(token!, editingPlacement.id, formData);
+                await placementApi.update(editingPlacement.id, formData);
             } else {
-                await placementApi.create(token!, formData);
+                await placementApi.create(formData);
             }
             setShowModal(false);
             setEditingPlacement(null);
@@ -60,7 +58,7 @@ export default function AdminPlacementsPage() {
         if (!confirm('Are you sure you want to delete this placement?')) return;
 
         try {
-            await placementApi.delete(token!, id);
+            await placementApi.delete(id);
             loadPlacements();
         } catch (err: any) {
             setError(err.message);

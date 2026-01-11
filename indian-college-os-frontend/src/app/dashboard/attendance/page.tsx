@@ -6,15 +6,15 @@ import { attendanceApi, AttendanceRecord } from '@/lib/api';
 import { AlertCircle } from 'lucide-react';
 
 export default function AttendancePage() {
-    const { token } = useAuth();
+    const { user } = useAuth();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadAttendance = async () => {
-            if (!token) return;
+            // Token check removed - using cookies
             try {
-                const data = await attendanceApi.getMyAttendance(token);
+                const data = await attendanceApi.getMyAttendance();
                 setRecords(data);
             } catch (error) {
                 console.error('Failed to load attendance:', error);
@@ -23,7 +23,7 @@ export default function AttendancePage() {
             }
         };
         loadAttendance();
-    }, [token]);
+    }, [user]);
 
     const totalClasses = records.length;
     const presentCount = records.filter(r => r.status === 'PRESENT').length;

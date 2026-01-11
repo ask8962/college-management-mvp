@@ -1,63 +1,60 @@
+'use client';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-interface FetchOptions extends RequestInit {
-    token?: string; // Legacy support - cookies are now primary auth method
+interface FetchOptions {
+    method?: string;
+    body?: string | FormData;
 }
 
 async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-    const { token, ...fetchOptions } = options;
+    const { method = 'GET', body } = options;
 
-    const headers: Record<string, string> = {};
+    const headers: HeadersInit = {};
 
-    // Copy existing headers
-    if (fetchOptions.headers) {
-        const existingHeaders = fetchOptions.headers as Record<string, string>;
-        Object.assign(headers, existingHeaders);
-    }
-
-    // Legacy: If token provided, use Authorization header
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (!(fetchOptions.body instanceof FormData)) {
+    // Only set Content-Type for JSON requests, not FormData
+    if (body && !(body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-        ...fetchOptions,
+    const fetchOptions: RequestInit = {
+        method,
         headers,
-        credentials: 'include', // Always send cookies for httpOnly auth
-    });
+        credentials: 'include', // Always include cookies
+    };
 
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'An error occurred' }));
-        throw new Error(error.message || 'Request failed');
+    if (body) {
+        fetchOptions.body = body;
     }
 
-    // Handle 204 No Content
-    if (response.status === 204) {
+    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `API error: ${response.status}`);
+    }
+
+    // Handle empty responses
+    const text = await response.text();
+    if (!text) {
         return {} as T;
     }
 
-    return response.json();
+    return JSON.parse(text);
 }
-
 
 // Auth APIs
 export interface AuthResponse {
-    token?: string;
     id?: string;
-    studentId?: string;
     name?: string;
-    email: string;
-    role?: 'ADMIN' | 'STUDENT';
+    email?: string;
+    role?: string;
     twoFactorRequired?: boolean;
-    emailVerificationRequired?: boolean;
+    message?: string;
 }
 
 export const authApi = {
-    register: (data: { name: string; studentId: string; email: string; password: string }) =>
+    register: (data: { name: string; email: string; password: string; studentId?: string }) =>
         fetchApi<AuthResponse>('/auth/register', {
             method: 'POST',
             body: JSON.stringify(data),
@@ -68,6 +65,10 @@ export const authApi = {
             method: 'POST',
             body: JSON.stringify(data),
         }),
+
+    me: () => fetchApi<AuthResponse>('/auth/me'),
+
+    logout: () => fetchApi<void>('/auth/logout', { method: 'POST' }),
 };
 
 // 2FA APIs
@@ -77,27 +78,23 @@ export interface TwoFactorSetup {
 }
 
 export const twoFactorApi = {
-    getStatus: (token: string) =>
-        fetchApi<{ enabled: boolean }>('/auth/2fa/status', { token }),
+    getStatus: () => fetchApi<{ enabled: boolean }>('/auth/2fa/status'),
 
-    setup: (token: string) =>
+    setup: () =>
         fetchApi<TwoFactorSetup>('/auth/2fa/setup', {
             method: 'POST',
-            token,
         }),
 
-    verify: (token: string, code: string) =>
+    verify: (code: string) =>
         fetchApi<{ success: boolean; message: string }>('/auth/2fa/verify', {
             method: 'POST',
             body: JSON.stringify({ code }),
-            token,
         }),
 
-    disable: (token: string, code: string) =>
+    disable: (code: string) =>
         fetchApi<{ success: boolean; message: string }>('/auth/2fa/disable', {
             method: 'POST',
             body: JSON.stringify({ code }),
-            token,
         }),
 };
 
@@ -112,30 +109,25 @@ export interface AttendanceRecord {
 }
 
 export const attendanceApi = {
-    getMyAttendance: (token: string) =>
-        fetchApi<AttendanceRecord[]>('/attendance', { token }),
+    getMyAttendance: () => fetchApi<AttendanceRecord[]>('/attendance'),
 
-    getAll: (token: string) =>
-        fetchApi<AttendanceRecord[]>('/attendance/all', { token }),
+    getAll: () => fetchApi<AttendanceRecord[]>('/attendance/all'),
 
-    create: (token: string, data: Omit<AttendanceRecord, 'id'>) =>
+    create: (data: Omit<AttendanceRecord, 'id'>) =>
         fetchApi<AttendanceRecord>('/attendance', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 
-    update: (token: string, id: string, data: Omit<AttendanceRecord, 'id'>) =>
+    update: (id: string, data: Omit<AttendanceRecord, 'id'>) =>
         fetchApi<AttendanceRecord>(`/attendance/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
-            token,
         }),
 
-    delete: (token: string, id: string) =>
+    delete: (id: string) =>
         fetchApi<void>(`/attendance/${id}`, {
             method: 'DELETE',
-            token,
         }),
 };
 
@@ -149,10 +141,9 @@ export interface Notice {
 }
 
 export const noticeApi = {
-    getAll: (token: string) =>
-        fetchApi<Notice[]>('/notices', { token }),
+    getAll: () => fetchApi<Notice[]>('/notices'),
 
-    create: (token: string, title: string, file: File) => {
+    create: (title: string, file: File) => {
         const formData = new FormData();
         formData.append('title', title);
         formData.append('file', file);
@@ -160,11 +151,10 @@ export const noticeApi = {
         return fetchApi<Notice>('/notices', {
             method: 'POST',
             body: formData,
-            token,
         });
     },
 
-    update: (token: string, id: string, title: string, file?: File) => {
+    update: (id: string, title: string, file?: File) => {
         const formData = new FormData();
         formData.append('title', title);
         if (file) {
@@ -174,14 +164,12 @@ export const noticeApi = {
         return fetchApi<Notice>(`/notices/${id}`, {
             method: 'PUT',
             body: formData,
-            token,
         });
     },
 
-    delete: (token: string, id: string) =>
+    delete: (id: string) =>
         fetchApi<void>(`/notices/${id}`, {
             method: 'DELETE',
-            token,
         }),
 };
 
@@ -195,30 +183,25 @@ export interface Exam {
 }
 
 export const examApi = {
-    getAll: (token: string) =>
-        fetchApi<Exam[]>('/exams', { token }),
+    getAll: () => fetchApi<Exam[]>('/exams'),
 
-    getUpcoming: (token: string) =>
-        fetchApi<Exam[]>('/exams/upcoming', { token }),
+    getUpcoming: () => fetchApi<Exam[]>('/exams/upcoming'),
 
-    create: (token: string, data: Omit<Exam, 'id'>) =>
+    create: (data: Omit<Exam, 'id'>) =>
         fetchApi<Exam>('/exams', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 
-    update: (token: string, id: string, data: Omit<Exam, 'id'>) =>
+    update: (id: string, data: Omit<Exam, 'id'>) =>
         fetchApi<Exam>(`/exams/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
-            token,
         }),
 
-    delete: (token: string, id: string) =>
+    delete: (id: string) =>
         fetchApi<void>(`/exams/${id}`, {
             method: 'DELETE',
-            token,
         }),
 };
 
@@ -232,30 +215,25 @@ export interface Placement {
 }
 
 export const placementApi = {
-    getAll: (token: string) =>
-        fetchApi<Placement[]>('/placements', { token }),
+    getAll: () => fetchApi<Placement[]>('/placements'),
 
-    getActive: (token: string) =>
-        fetchApi<Placement[]>('/placements/active', { token }),
+    getActive: () => fetchApi<Placement[]>('/placements/active'),
 
-    create: (token: string, data: Omit<Placement, 'id'>) =>
+    create: (data: Omit<Placement, 'id'>) =>
         fetchApi<Placement>('/placements', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 
-    update: (token: string, id: string, data: Omit<Placement, 'id'>) =>
+    update: (id: string, data: Omit<Placement, 'id'>) =>
         fetchApi<Placement>(`/placements/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
-            token,
         }),
 
-    delete: (token: string, id: string) =>
+    delete: (id: string) =>
         fetchApi<void>(`/placements/${id}`, {
             method: 'DELETE',
-            token,
         }),
 };
 
@@ -269,14 +247,12 @@ export interface UserInfo {
 }
 
 export const usersApi = {
-    getAllStudents: (token: string) =>
-        fetchApi<UserInfo[]>('/users/students', { token }),
+    getAllStudents: () => fetchApi<UserInfo[]>('/users/students'),
 
-    updateStudentId: (token: string, userId: string, studentId: string) =>
+    updateStudentId: (userId: string, studentId: string) =>
         fetchApi<UserInfo>(`/users/${userId}/student-id`, {
             method: 'PUT',
             body: JSON.stringify({ studentId }),
-            token,
         }),
 };
 
@@ -297,14 +273,11 @@ export interface Gig {
 }
 
 export const gigApi = {
-    getAll: () =>
-        fetchApi<Gig[]>('/gigs'),
+    getAll: () => fetchApi<Gig[]>('/gigs'),
 
-    getByCategory: (category: string) =>
-        fetchApi<Gig[]>(`/gigs/category/${category}`),
+    getByCategory: (category: string) => fetchApi<Gig[]>(`/gigs/category/${category}`),
 
-    getMyGigs: () =>
-        fetchApi<Gig[]>('/gigs/my'),
+    getMyGigs: () => fetchApi<Gig[]>('/gigs/my'),
 
     create: (data: { title: string; description: string; category: string; budget: number; contactInfo: string; deadline?: string }) =>
         fetchApi<Gig>('/gigs', {
@@ -351,14 +324,11 @@ export interface ProfessorStats {
 }
 
 export const professorReviewApi = {
-    getAll: () =>
-        fetchApi<ProfessorReview[]>('/reviews'),
+    getAll: () => fetchApi<ProfessorReview[]>('/reviews'),
 
-    search: (name: string) =>
-        fetchApi<ProfessorReview[]>(`/reviews/search?name=${encodeURIComponent(name)}`),
+    search: (name: string) => fetchApi<ProfessorReview[]>(`/reviews/search?name=${encodeURIComponent(name)}`),
 
-    getStats: () =>
-        fetchApi<ProfessorStats[]>('/reviews/stats'),
+    getStats: () => fetchApi<ProfessorStats[]>('/reviews/stats'),
 
     create: (data: {
         professorName: string;
@@ -390,8 +360,7 @@ export interface AttendanceAlert {
 }
 
 export const alertApi = {
-    getActive: () =>
-        fetchApi<AttendanceAlert[]>('/alerts'),
+    getActive: () => fetchApi<AttendanceAlert[]>('/alerts'),
 
     create: (data: { subject: string; location: string; message?: string }) =>
         fetchApi<AttendanceAlert>('/alerts', {
@@ -399,10 +368,9 @@ export const alertApi = {
             body: JSON.stringify(data),
         }),
 
-    deactivate: (token: string, id: string) =>
+    deactivate: (id: string) =>
         fetchApi<void>(`/alerts/${id}`, {
             method: 'DELETE',
-            token,
         }),
 };
 
@@ -420,13 +388,11 @@ export interface Activity {
 }
 
 export const activityApi = {
-    get: (token: string) =>
-        fetchApi<Activity>('/activity', { token }),
+    get: () => fetchApi<Activity>('/activity'),
 
-    checkIn: (token: string) =>
+    checkIn: () =>
         fetchApi<Activity>('/activity/checkin', {
             method: 'POST',
-            token,
         }),
 };
 
@@ -457,33 +423,27 @@ export interface ChatMessage {
 }
 
 export const chatApi = {
-    getRooms: (token: string) =>
-        fetchApi<ChatRoom[]>('/chat/rooms', { token }),
+    getRooms: () => fetchApi<ChatRoom[]>('/chat/rooms'),
 
-    getRoom: (token: string, roomId: string) =>
-        fetchApi<ChatRoom>(`/chat/rooms/${roomId}`, { token }),
+    getRoom: (roomId: string) => fetchApi<ChatRoom>(`/chat/rooms/${roomId}`),
 
-    createRoom: (token: string, data: { name: string; description?: string; broadcastMode: boolean }) =>
+    createRoom: (data: { name: string; description?: string; broadcastMode: boolean }) =>
         fetchApi<ChatRoom>('/chat/rooms', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 
-    toggleBroadcast: (token: string, roomId: string) =>
+    toggleBroadcast: (roomId: string) =>
         fetchApi<ChatRoom>(`/chat/rooms/${roomId}/broadcast`, {
             method: 'PATCH',
-            token,
         }),
 
-    getMessages: (token: string, roomId: string) =>
-        fetchApi<ChatMessage[]>(`/chat/rooms/${roomId}/messages`, { token }),
+    getMessages: (roomId: string) => fetchApi<ChatMessage[]>(`/chat/rooms/${roomId}/messages`),
 
-    sendMessage: (token: string, roomId: string, data: { content: string; type?: string; fileUrl?: string; fileName?: string }) =>
+    sendMessage: (roomId: string, data: { content: string; type?: string; fileUrl?: string; fileName?: string }) =>
         fetchApi<ChatMessage>(`/chat/rooms/${roomId}/messages`, {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 };
 
@@ -509,38 +469,32 @@ export interface TaskStats {
 }
 
 export const taskApi = {
-    getAll: (token: string, completed?: boolean) => {
+    getAll: (completed?: boolean) => {
         const query = completed !== undefined ? `?completed=${completed}` : '';
-        return fetchApi<Task[]>(`/tasks${query}`, { token });
+        return fetchApi<Task[]>(`/tasks${query}`);
     },
 
-    getStats: (token: string) =>
-        fetchApi<TaskStats>('/tasks/stats', { token }),
+    getStats: () => fetchApi<TaskStats>('/tasks/stats'),
 
-    create: (token: string, data: { title: string; description?: string; category?: string; priority?: string; dueDate?: string }) =>
+    create: (data: { title: string; description?: string; category?: string; priority?: string; dueDate?: string }) =>
         fetchApi<Task>('/tasks', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 
-    update: (token: string, taskId: string, data: { title: string; description?: string; category?: string; priority?: string; dueDate?: string }) =>
+    update: (taskId: string, data: { title: string; description?: string; category?: string; priority?: string; dueDate?: string }) =>
         fetchApi<Task>(`/tasks/${taskId}`, {
             method: 'PUT',
             body: JSON.stringify(data),
-            token,
         }),
 
-    toggle: (token: string, taskId: string) =>
+    toggle: (taskId: string) =>
         fetchApi<Task>(`/tasks/${taskId}/toggle`, {
             method: 'PATCH',
-            token,
         }),
 
-    delete: (token: string, taskId: string) =>
+    delete: (taskId: string) =>
         fetchApi<void>(`/tasks/${taskId}`, {
             method: 'DELETE',
-            token,
         }),
 };
-

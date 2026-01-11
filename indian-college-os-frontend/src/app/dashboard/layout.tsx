@@ -38,7 +38,7 @@ export default function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            <Sidebar onLogout={handleLogout} />
+            <Sidebar />
             <main className="ml-56 min-h-screen">
                 <div className="p-6 max-w-container mx-auto">
                     {children}

@@ -42,7 +42,7 @@ export default function AdminLayout({
 
     return (
         <div className="min-h-screen">
-            <Sidebar onLogout={handleLogout} />
+            <Sidebar />
             <main className="ml-64 p-8">
                 {children}
             </main>

@@ -19,9 +19,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check for stored auth data on mount
-        const storedUser = localStorage.getItem('user');
-        const storedToken = localStorage.getItem('token');
+        // Check for stored auth data on mount (sessionStorage is cleared on browser close)
+        const storedUser = sessionStorage.getItem('user');
+        const storedToken = sessionStorage.getItem('token');
 
         if (storedUser && storedToken) {
             setUser(JSON.parse(storedUser));
@@ -35,21 +35,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUser(userData);
         setToken(userData.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('token', userData.token);
-        // Set cookies for middleware
+        // Use sessionStorage (cleared on browser close, less XSS-persistent than localStorage)
+        sessionStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('token', userData.token);
+        // Token cookie for middleware (role is NOT stored in cookie to prevent tampering)
         document.cookie = `token=${userData.token}; path=/; max-age=86400; SameSite=Strict`;
-        document.cookie = `role=${userData.role || 'STUDENT'}; path=/; max-age=86400; SameSite=Strict`;
     };
 
     const logout = () => {
         setUser(null);
         setToken(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        // Remove cookies
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        // Remove cookie
         document.cookie = 'token=; path=/; max-age=0';
-        document.cookie = 'role=; path=/; max-age=0';
     };
 
     return (

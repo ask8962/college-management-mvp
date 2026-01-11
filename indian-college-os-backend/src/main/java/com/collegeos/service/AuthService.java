@@ -34,17 +34,15 @@ public class AuthService {
             throw new AuthException("Student ID already registered");
         }
 
-        User.Role role = User.Role.STUDENT;
-        if (request.getEmail().equalsIgnoreCase("ganukalp70@gmail.com")) {
-            role = User.Role.ADMIN;
-        }
+        // All new users are STUDENT by default. Admin role must be manually set in
+        // database.
 
         User user = User.builder()
                 .name(request.getName())
                 .studentId(request.getStudentId())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(role)
+                .role(User.Role.STUDENT)
                 .twoFactorEnabled(false)
                 .build();
 
@@ -71,11 +69,7 @@ public class AuthService {
             throw new AuthException("Invalid email or password");
         }
 
-        // Auto-promote to ADMIN if matching email
-        if (user.getEmail().equalsIgnoreCase("ganukalp70@gmail.com") && user.getRole() != User.Role.ADMIN) {
-            user.setRole(User.Role.ADMIN);
-            user = userRepository.save(user);
-        }
+        // Role is determined by database value only - no hardcoded escalation
 
         // Check if 2FA is enabled
         if (user.isTwoFactorEnabled()) {

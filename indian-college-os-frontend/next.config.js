@@ -26,7 +26,7 @@ const nextConfig = {
 
   // Experimental optimizations
   experimental: {
-    optimizeCss: true,
+    // optimizeCss: true, // Disabled due to Vercel build error (requires 'critters')
   },
 };
 

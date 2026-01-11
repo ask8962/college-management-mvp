@@ -7,29 +7,27 @@ import { useAuth } from '@/lib/auth';
 import { Plus, Search, DollarSign, Calendar, Tag } from 'lucide-react';
 
 export default function MarketplacePage() {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const [gigs, setGigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
     const [search, setSearch] = useState('');
 
     useEffect(() => {
-        if (token) {
-            fetchGigs();
-        }
-    }, [filter, token]);
+        fetchGigs();
+    }, [filter]);
 
     const fetchGigs = async () => {
-        if (!token) return;
+        // if (!user) return; // Optional: if we want to wait for user load
         setLoading(true);
         try {
             let data;
             if (filter === 'MY') {
-                data = await gigApi.getMyGigs(token);
+                data = await gigApi.getMyGigs();
             } else if (filter !== 'ALL') {
-                data = await gigApi.getByCategory(token, filter);
+                data = await gigApi.getByCategory(filter);
             } else {
-                data = await gigApi.getAll(token);
+                data = await gigApi.getAll();
             }
             setGigs(data);
         } catch (error) {

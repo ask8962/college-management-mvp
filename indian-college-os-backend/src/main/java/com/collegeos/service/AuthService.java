@@ -100,6 +100,30 @@ public class AuthService {
     }
 
     /**
+     * Get user info from JWT token (for /auth/me endpoint)
+     */
+    public AuthResponse getUserFromToken(String token) {
+        String userId = jwtUtil.extractUserId(token);
+        String email = jwtUtil.extractEmail(token);
+
+        if (userId == null || !jwtUtil.isTokenValid(token, email)) {
+            throw new AuthException("Invalid token");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AuthException("User not found"));
+
+        return AuthResponse.builder()
+                .id(user.getId())
+                .studentId(user.getStudentId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorRequired(false)
+                .build();
+    }
+
+    /**
      * Custom exception for authentication errors
      */
     public static class AuthException extends RuntimeException {

@@ -35,6 +35,7 @@ export default function Sidebar() {
         { href: '/tasks', label: 'My Tasks', icon: CheckSquare },
         { href: '/placements', label: 'Placements', icon: Briefcase },
         { href: '/dashboard/chat', label: 'Chat Rooms', icon: MessageSquare },
+        { href: '/dashboard/settings', label: 'Settings', icon: Shield },
     ];
 
     if (user?.role === 'ADMIN') {

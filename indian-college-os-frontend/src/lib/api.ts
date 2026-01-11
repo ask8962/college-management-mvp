@@ -1,7 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 interface FetchOptions extends RequestInit {
-    token?: string;
+    token?: string; // Legacy support - cookies are now primary auth method
 }
 
 async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
@@ -15,6 +15,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
         Object.assign(headers, existingHeaders);
     }
 
+    // Legacy: If token provided, use Authorization header
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
@@ -26,6 +27,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     const response = await fetch(`${API_URL}${endpoint}`, {
         ...fetchOptions,
         headers,
+        credentials: 'include', // Always send cookies for httpOnly auth
     });
 
     if (!response.ok) {
@@ -295,33 +297,30 @@ export interface Gig {
 }
 
 export const gigApi = {
-    getAll: (token: string) =>
-        fetchApi<Gig[]>('/gigs', { token }),
+    getAll: () =>
+        fetchApi<Gig[]>('/gigs'),
 
-    getByCategory: (token: string, category: string) =>
-        fetchApi<Gig[]>(`/gigs/category/${category}`, { token }),
+    getByCategory: (category: string) =>
+        fetchApi<Gig[]>(`/gigs/category/${category}`),
 
-    getMyGigs: (token: string) =>
-        fetchApi<Gig[]>('/gigs/my', { token }),
+    getMyGigs: () =>
+        fetchApi<Gig[]>('/gigs/my'),
 
-    create: (token: string, data: { title: string; description: string; category: string; budget: number; contactInfo: string; deadline?: string }) =>
+    create: (data: { title: string; description: string; category: string; budget: number; contactInfo: string; deadline?: string }) =>
         fetchApi<Gig>('/gigs', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 
-    updateStatus: (token: string, id: string, status: string) =>
+    updateStatus: (id: string, status: string) =>
         fetchApi<Gig>(`/gigs/${id}/status`, {
             method: 'PATCH',
             body: JSON.stringify({ status }),
-            token,
         }),
 
-    delete: (token: string, id: string) =>
+    delete: (id: string) =>
         fetchApi<void>(`/gigs/${id}`, {
             method: 'DELETE',
-            token,
         }),
 };
 
@@ -352,16 +351,16 @@ export interface ProfessorStats {
 }
 
 export const professorReviewApi = {
-    getAll: (token: string) =>
-        fetchApi<ProfessorReview[]>('/reviews', { token }),
+    getAll: () =>
+        fetchApi<ProfessorReview[]>('/reviews'),
 
-    search: (token: string, name: string) =>
-        fetchApi<ProfessorReview[]>(`/reviews/search?name=${encodeURIComponent(name)}`, { token }),
+    search: (name: string) =>
+        fetchApi<ProfessorReview[]>(`/reviews/search?name=${encodeURIComponent(name)}`),
 
-    getStats: (token: string) =>
-        fetchApi<ProfessorStats[]>('/reviews/stats', { token }),
+    getStats: () =>
+        fetchApi<ProfessorStats[]>('/reviews/stats'),
 
-    create: (token: string, data: {
+    create: (data: {
         professorName: string;
         department: string;
         subject?: string;
@@ -374,7 +373,6 @@ export const professorReviewApi = {
         fetchApi<ProfessorReview>('/reviews', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 };
 
@@ -392,14 +390,13 @@ export interface AttendanceAlert {
 }
 
 export const alertApi = {
-    getActive: (token: string) =>
-        fetchApi<AttendanceAlert[]>('/alerts', { token }),
+    getActive: () =>
+        fetchApi<AttendanceAlert[]>('/alerts'),
 
-    create: (token: string, data: { subject: string; location: string; message?: string }) =>
+    create: (data: { subject: string; location: string; message?: string }) =>
         fetchApi<AttendanceAlert>('/alerts', {
             method: 'POST',
             body: JSON.stringify(data),
-            token,
         }),
 
     deactivate: (token: string, id: string) =>

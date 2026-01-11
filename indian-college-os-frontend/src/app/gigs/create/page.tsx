@@ -9,7 +9,7 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function CreateGigPage() {
     const router = useRouter();
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -25,11 +25,11 @@ export default function CreateGigPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!token) return;
+        if (!user) return;
         setLoading(true);
 
         try {
-            await gigApi.create(token, {
+            await gigApi.create({
                 ...formData,
                 budget: Number(formData.budget)
             });

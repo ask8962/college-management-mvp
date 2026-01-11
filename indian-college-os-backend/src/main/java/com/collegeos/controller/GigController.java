@@ -18,67 +18,61 @@ import java.util.Map;
 public class GigController {
 
     private final GigService gigService;
-    private final JwtUtil jwtUtil;
+    private final com.collegeos.repository.UserRepository userRepository; // Direct repo dependency for finding user ID
 
     @PostMapping
     public ResponseEntity<GigResponse> create(
-            @RequestHeader("Authorization") String authHeader,
             @Valid @RequestBody GigRequest request) {
-        String token = authHeader.substring(7);
-        String userId = jwtUtil.extractUserId(token);
+        String userId = getCurrentUserId();
         return ResponseEntity.ok(gigService.create(request, userId));
     }
 
     @GetMapping
-    public ResponseEntity<List<GigResponse>> getAll(
-            @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring(7);
-        String userId = jwtUtil.extractUserId(token);
+    public ResponseEntity<List<GigResponse>> getAll() {
+        String userId = getCurrentUserId();
         return ResponseEntity.ok(gigService.getOpen(userId));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<GigResponse>> getAllIncludingClosed(
-            @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring(7);
-        String userId = jwtUtil.extractUserId(token);
+    public ResponseEntity<List<GigResponse>> getAllIncludingClosed() {
+        String userId = getCurrentUserId();
         return ResponseEntity.ok(gigService.getAll(userId));
     }
 
     @GetMapping("/category/{category}")
     public ResponseEntity<List<GigResponse>> getByCategory(
-            @RequestHeader("Authorization") String authHeader,
             @PathVariable String category) {
-        String token = authHeader.substring(7);
-        String userId = jwtUtil.extractUserId(token);
+        String userId = getCurrentUserId();
         return ResponseEntity.ok(gigService.getByCategory(category, userId));
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<GigResponse>> getMyGigs(
-            @RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring(7);
-        String userId = jwtUtil.extractUserId(token);
+    public ResponseEntity<List<GigResponse>> getMyGigs() {
+        String userId = getCurrentUserId();
         return ResponseEntity.ok(gigService.getMyGigs(userId));
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<GigResponse> updateStatus(
-            @RequestHeader("Authorization") String authHeader,
             @PathVariable String id,
             @RequestBody Map<String, String> body) {
-        String token = authHeader.substring(7);
-        String userId = jwtUtil.extractUserId(token);
+        String userId = getCurrentUserId();
         return ResponseEntity.ok(gigService.updateStatus(id, body.get("status"), userId));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @RequestHeader("Authorization") String authHeader,
             @PathVariable String id) {
-        String token = authHeader.substring(7);
-        String userId = jwtUtil.extractUserId(token);
+        String userId = getCurrentUserId();
         gigService.delete(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    private String getCurrentUserId() {
+        String email = (String) org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
     }
 }

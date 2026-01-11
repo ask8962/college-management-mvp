@@ -6,20 +6,17 @@ import { useAuth } from '@/lib/auth';
 import { Trash2, ExternalLink, BadgeDollarSign } from 'lucide-react';
 
 export default function GigModerationPage() {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
     const [gigs, setGigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            fetchGigs();
-        }
-    }, [token]);
+        fetchGigs();
+    }, []);
 
     const fetchGigs = async () => {
-        if (!token) return;
         try {
-            const data = await gigApi.getAll(token); // Uses the /gigs endpoint (open gigs)
+            const data = await gigApi.getAll(); // Uses the /gigs endpoint (open gigs)
             // Ideally we'd have a specific admin endpoint for ALL gigs including closed/flagged
             setGigs(data);
         } catch (error) {
@@ -30,11 +27,10 @@ export default function GigModerationPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!token) return;
         if (!confirm('Are you sure you want to delete this gig? This action cannot be undone.')) return;
 
         try {
-            await gigApi.delete(token, id);
+            await gigApi.delete(id);
             setGigs(gigs.filter(g => g.id !== id));
             alert('Gig deleted successfully by Admin.');
         } catch (error) {

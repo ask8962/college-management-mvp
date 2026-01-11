@@ -1,58 +1,74 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthResponse } from './api';
+import { AuthResponse, authApi } from './api';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 interface AuthContextType {
     user: AuthResponse | null;
-    token: string | null;
     login: (userData: AuthResponse) => void;
-    logout: () => void;
+    logout: () => Promise<void>;
     isLoading: boolean;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthResponse | null>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        // Check for stored auth data on mount (sessionStorage is cleared on browser close)
-        const storedUser = sessionStorage.getItem('user');
-        const storedToken = sessionStorage.getItem('token');
+    // Check authentication status on mount by calling /auth/me
+    const checkAuthStatus = async () => {
+        try {
+            const response = await fetch(`${API_URL}/auth/me`, {
+                credentials: 'include',
+            });
 
-        if (storedUser && storedToken) {
-            setUser(JSON.parse(storedUser));
-            setToken(storedToken);
+            if (response.ok) {
+                const userData = await response.json();
+                setUser(userData);
+            } else {
+                setUser(null);
+            }
+        } catch {
+            setUser(null);
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
-    }, []);
-
-    const login = (userData: AuthResponse) => {
-        if (!userData.token) return;
-
-        setUser(userData);
-        setToken(userData.token);
-        // Use sessionStorage (cleared on browser close, less XSS-persistent than localStorage)
-        sessionStorage.setItem('user', JSON.stringify(userData));
-        sessionStorage.setItem('token', userData.token);
-        // Token cookie for middleware (role is NOT stored in cookie to prevent tampering)
-        document.cookie = `token=${userData.token}; path=/; max-age=86400; SameSite=Strict`;
     };
 
-    const logout = () => {
-        setUser(null);
-        setToken(null);
-        sessionStorage.removeItem('user');
-        sessionStorage.removeItem('token');
-        // Remove cookie
-        document.cookie = 'token=; path=/; max-age=0';
+    useEffect(() => {
+        checkAuthStatus();
+    }, []);
+
+    const refreshUser = async () => {
+        await checkAuthStatus();
+    };
+
+    // Called after successful login - backend has already set the cookie
+    const login = (userData: AuthResponse) => {
+        // Backend sets httpOnly cookie, we just update local state
+        setUser(userData);
+    };
+
+    const logout = async () => {
+        try {
+            // Call backend to clear the httpOnly cookie
+            await fetch(`${API_URL}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            setUser(null);
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, login, logout, isLoading, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );
@@ -65,3 +81,4 @@ export function useAuth() {
     }
     return context;
 }
+

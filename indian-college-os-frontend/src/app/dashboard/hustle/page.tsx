@@ -16,7 +16,7 @@ const CATEGORIES = [
 ];
 
 export default function HustlePage() {
-    const { token, user } = useAuth();
+    const { user } = useAuth();
     const [gigs, setGigs] = useState<Gig[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -29,16 +29,19 @@ export default function HustlePage() {
         contactInfo: '',
         deadline: '',
     });
+    const [filter, setFilter] = useState<'ALL' | 'MY'>('ALL'); // Added filter state
 
     useEffect(() => {
-        if (token) loadGigs();
-    }, [token, activeFilter]);
+        loadGigs();
+    }, [activeFilter, filter]); // Removed token from dependencies
 
     const loadGigs = async () => {
         try {
-            const data = activeFilter
-                ? await gigApi.getByCategory(token!, activeFilter)
-                : await gigApi.getAll(token!);
+            const data = filter === 'MY'
+                ? await gigApi.getMyGigs()
+                : activeFilter && activeFilter !== 'ALL'
+                    ? await gigApi.getByCategory(activeFilter)
+                    : await gigApi.getAll();
             setGigs(data);
         } catch (error) {
             console.error('Failed to load gigs:', error);
@@ -50,7 +53,7 @@ export default function HustlePage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await gigApi.create(token!, formData);
+            await gigApi.create(formData);
             setShowForm(false);
             setFormData({ title: '', description: '', category: 'ASSIGNMENT', budget: 100, contactInfo: '', deadline: '' });
             loadGigs();
@@ -62,7 +65,7 @@ export default function HustlePage() {
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this listing?')) return;
         try {
-            await gigApi.delete(token!, id);
+            await gigApi.delete(id);
             loadGigs();
         } catch (error) {
             alert('Failed to delete');
@@ -71,7 +74,7 @@ export default function HustlePage() {
 
     const handleMarkComplete = async (id: string) => {
         try {
-            await gigApi.updateStatus(token!, id, 'COMPLETED');
+            await gigApi.updateStatus(id, 'COMPLETED');
             loadGigs();
         } catch (error) {
             alert('Failed to update');

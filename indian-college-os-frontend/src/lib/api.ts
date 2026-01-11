@@ -54,11 +54,6 @@ export interface AuthResponse {
     emailVerificationRequired?: boolean;
 }
 
-export interface MessageResponse {
-    message: string;
-    success: boolean;
-}
-
 export const authApi = {
     register: (data: { name: string; studentId: string; email: string; password: string }) =>
         fetchApi<AuthResponse>('/auth/register', {
@@ -70,28 +65,6 @@ export const authApi = {
         fetchApi<AuthResponse>('/auth/login', {
             method: 'POST',
             body: JSON.stringify(data),
-        }),
-
-    forgotPassword: (email: string) =>
-        fetchApi<MessageResponse>('/auth/forgot-password', {
-            method: 'POST',
-            body: JSON.stringify({ email }),
-        }),
-
-    resetPassword: (token: string, newPassword: string) =>
-        fetchApi<MessageResponse>('/auth/reset-password', {
-            method: 'POST',
-            body: JSON.stringify({ token, newPassword }),
-        }),
-
-    verifyEmail: (token: string) =>
-        fetchApi<MessageResponse>(`/auth/verify-email?token=${token}`, {
-            method: 'GET',
-        }),
-
-    resendVerification: (email: string) =>
-        fetchApi<MessageResponse>(`/auth/resend-verification?email=${encodeURIComponent(email)}`, {
-            method: 'POST',
         }),
 };
 

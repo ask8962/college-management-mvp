@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, Calendar } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminAttendancePage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,8 +21,10 @@ export default function AdminAttendancePage() {
     });
 
     useEffect(() => {
-        loadRecords();
-    }, []);
+        if (token) {
+            loadRecords();
+        }
+    }, [token]);
 
     const loadRecords = async () => {
         try {

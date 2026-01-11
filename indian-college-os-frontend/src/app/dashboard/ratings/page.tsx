@@ -21,7 +21,7 @@ const DEPARTMENTS = [
 ];
 
 export default function RatingsPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [stats, setStats] = useState<ProfessorStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);

@@ -9,7 +9,7 @@ const CATEGORIES = ['STUDY', 'ASSIGNMENT', 'PERSONAL', 'EXAM', 'OTHER'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function TasksPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [stats, setStats] = useState<TaskStats | null>(null);
     const [loading, setLoading] = useState(true);
@@ -38,14 +38,14 @@ export default function TasksPage() {
         } finally {
             setLoading(false);
         }
-    }, [user, filter]);
+    }, [filter]);
 
     useEffect(() => {
         loadTasks();
     }, [loadTasks]);
 
     const handleCreate = async () => {
-        if (!form.title.trim()) return;
+        if (!token || !form.title.trim()) return;
         try {
             await taskApi.create({
                 ...form,

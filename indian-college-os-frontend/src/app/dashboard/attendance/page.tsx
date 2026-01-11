@@ -6,13 +6,13 @@ import { attendanceApi, AttendanceRecord } from '@/lib/api';
 import { AlertCircle } from 'lucide-react';
 
 export default function AttendancePage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadAttendance = async () => {
-            // Token check removed - using cookies
+            if (!token) return;
             try {
                 const data = await attendanceApi.getMyAttendance();
                 setRecords(data);
@@ -23,7 +23,7 @@ export default function AttendancePage() {
             }
         };
         loadAttendance();
-    }, [user]);
+    }, [token]);
 
     const totalClasses = records.length;
     const presentCount = records.filter(r => r.status === 'PRESENT').length;

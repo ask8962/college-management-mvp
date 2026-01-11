@@ -18,7 +18,6 @@ export default function MarketplacePage() {
     }, [filter]);
 
     const fetchGigs = async () => {
-        // if (!user) return; // Optional: if we want to wait for user load
         setLoading(true);
         try {
             let data;

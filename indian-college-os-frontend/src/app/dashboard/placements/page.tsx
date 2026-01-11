@@ -6,7 +6,7 @@ import { placementApi, Placement } from '@/lib/api';
 import { Briefcase, Building2, Calendar, CheckCircle } from 'lucide-react';
 
 export default function PlacementsPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [placements, setPlacements] = useState<Placement[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -23,7 +23,7 @@ export default function PlacementsPage() {
             }
         };
         loadPlacements();
-    }, [user]);
+    }, []);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-IN', {

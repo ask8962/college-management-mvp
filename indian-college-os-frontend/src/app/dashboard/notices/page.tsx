@@ -6,7 +6,7 @@ import { noticeApi, Notice } from '@/lib/api';
 import { Bell, FileText, ExternalLink, Download } from 'lucide-react';
 
 export default function NoticesPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [notices, setNotices] = useState<Notice[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -23,7 +23,7 @@ export default function NoticesPage() {
             }
         };
         loadNotices();
-    }, [user]);
+    }, []);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-IN', {

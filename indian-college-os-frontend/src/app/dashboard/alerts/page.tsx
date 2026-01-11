@@ -6,7 +6,7 @@ import { alertApi, AttendanceAlert } from '@/lib/api';
 import { Plus, X, MapPin, Clock, AlertTriangle, Bell, Vibrate } from 'lucide-react';
 
 export default function AlertsPage() {
-    const { user } = useAuth();
+    const { token, user } = useAuth();
     const [alerts, setAlerts] = useState<AttendanceAlert[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -17,7 +17,7 @@ export default function AlertsPage() {
     });
 
     const loadAlerts = useCallback(async () => {
-        // Token check removed - using cookies
+        if (!token) return;
         try {
             const data = await alertApi.getActive();
             setAlerts(data);
@@ -31,7 +31,7 @@ export default function AlertsPage() {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [token]);
 
     useEffect(() => {
         loadAlerts();

@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { alertApi, AttendanceAlert } from '@/lib/api';
 
 export default function AlertNotifier() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const lastAlertIdRef = useRef<string | null>(null);
     const hasPermissionRef = useRef(false);
 
@@ -59,7 +59,7 @@ export default function AlertNotifier() {
         } catch (error) {
             // Silently fail - background process
         }
-    }, [user]);
+    }, []);
 
     useEffect(() => {
         // Initial check

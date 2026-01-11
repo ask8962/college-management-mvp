@@ -6,7 +6,7 @@ import { twoFactorApi, TwoFactorSetup } from '@/lib/api';
 import { Shield, ShieldCheck, ShieldOff, Key, Copy, Check } from 'lucide-react';
 
 export default function SecurityPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [isEnabled, setIsEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
     const [setupData, setSetupData] = useState<TwoFactorSetup | null>(null);
@@ -17,7 +17,7 @@ export default function SecurityPage() {
 
     useEffect(() => {
         loadStatus();
-    }, [user]);
+    }, []);
 
     const loadStatus = async () => {
         // Token check removed - using cookies
@@ -43,7 +43,7 @@ export default function SecurityPage() {
     };
 
     const handleVerify = async () => {
-        if (!code) return;
+        if (!token || !code) return;
         setMessage('');
         try {
             const data = await twoFactorApi.verify(code);
@@ -61,7 +61,7 @@ export default function SecurityPage() {
     };
 
     const handleDisable = async () => {
-        if (!code) return;
+        if (!token || !code) return;
         setMessage('');
         try {
             const data = await twoFactorApi.disable(code);

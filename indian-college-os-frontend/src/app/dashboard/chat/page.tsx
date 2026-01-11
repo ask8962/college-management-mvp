@@ -6,7 +6,7 @@ import { chatApi, ChatRoom, ChatMessage } from '@/lib/api';
 import { Send, Plus, X, MessageSquare, Radio, Circle, Lock, Unlock, ArrowLeft, Users } from 'lucide-react';
 
 export default function ChatPage() {
-    const { user } = useAuth();
+    const { token, user } = useAuth();
     const [rooms, setRooms] = useState<ChatRoom[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,7 +18,7 @@ export default function ChatPage() {
     const isAdmin = user?.role === 'ADMIN';
 
     const loadRooms = useCallback(async () => {
-        // Token check removed - using cookies
+        if (!token) return;
         try {
             const data = await chatApi.getRooms();
             setRooms(data);
@@ -27,10 +27,10 @@ export default function ChatPage() {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [token]);
 
     const loadMessages = useCallback(async () => {
-        if (!selectedRoom) return;
+        if (!token || !selectedRoom) return;
         try {
             const data = await chatApi.getMessages(selectedRoom.id);
             setMessages(data);
@@ -38,7 +38,7 @@ export default function ChatPage() {
         } catch (error) {
             console.error('Failed to load messages:', error);
         }
-    }, [user, selectedRoom]);
+    }, [token, selectedRoom]);
 
     useEffect(() => {
         loadRooms();
@@ -54,7 +54,7 @@ export default function ChatPage() {
     }, [loadMessages, selectedRoom]);
 
     const handleSend = async () => {
-        if (!selectedRoom || !newMessage.trim()) return;
+        if (!token || !selectedRoom || !newMessage.trim()) return;
         try {
             await chatApi.sendMessage(selectedRoom.id, { content: newMessage, type: 'TEXT' });
             setNewMessage('');
@@ -65,7 +65,7 @@ export default function ChatPage() {
     };
 
     const handleToggleBroadcast = async () => {
-        if (!selectedRoom) return;
+        if (!token || !selectedRoom) return;
         try {
             const updated = await chatApi.toggleBroadcast(selectedRoom.id);
             setSelectedRoom(updated);
@@ -77,7 +77,7 @@ export default function ChatPage() {
     };
 
     const handleCreateRoom = async () => {
-        if (!roomForm.name.trim()) return;
+        if (!token || !roomForm.name.trim()) return;
         try {
             await chatApi.createRoom(roomForm);
             setShowCreateRoom(false);
@@ -89,7 +89,7 @@ export default function ChatPage() {
     };
 
     const selectRoom = async (room: ChatRoom) => {
-        // Token check removed - using cookies
+        if (!token) return;
         try {
             const fullRoom = await chatApi.getRoom(room.id);
             setSelectedRoom(fullRoom);

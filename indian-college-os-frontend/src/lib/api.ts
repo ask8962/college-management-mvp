@@ -1,60 +1,77 @@
-'use client';
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-interface FetchOptions {
-    method?: string;
-    body?: string | FormData;
+// Helper to get token from localStorage (client-side only)
+function getStoredToken(): string | null {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('token');
+    }
+    return null;
+}
+
+interface FetchOptions extends RequestInit {
+    token?: string;
 }
 
 async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-    const { method = 'GET', body } = options;
+    const { token: explicitToken, ...fetchOptions } = options;
 
-    const headers: HeadersInit = {};
+    // Use explicit token if provided, otherwise get from localStorage
+    const token = explicitToken ?? getStoredToken();
 
-    // Only set Content-Type for JSON requests, not FormData
-    if (body && !(body instanceof FormData)) {
+    const headers: Record<string, string> = {};
+
+    // Copy existing headers
+    if (fetchOptions.headers) {
+        const existingHeaders = fetchOptions.headers as Record<string, string>;
+        Object.assign(headers, existingHeaders);
+    }
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (!(fetchOptions.body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const fetchOptions: RequestInit = {
-        method,
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        ...fetchOptions,
         headers,
-        credentials: 'include', // Always include cookies
-    };
-
-    if (body) {
-        fetchOptions.body = body;
-    }
-
-    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+    });
 
     if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `API error: ${response.status}`);
+        const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+        throw new Error(error.message || 'Request failed');
     }
 
-    // Handle empty responses
-    const text = await response.text();
-    if (!text) {
+    // Handle 204 No Content
+    if (response.status === 204) {
         return {} as T;
     }
 
-    return JSON.parse(text);
+    return response.json();
 }
+
 
 // Auth APIs
 export interface AuthResponse {
+    token?: string;
     id?: string;
+    studentId?: string;
     name?: string;
-    email?: string;
-    role?: string;
+    email: string;
+    role?: 'ADMIN' | 'STUDENT';
     twoFactorRequired?: boolean;
-    message?: string;
+    emailVerificationRequired?: boolean;
+}
+
+export interface MessageResponse {
+    message: string;
+    success: boolean;
 }
 
 export const authApi = {
-    register: (data: { name: string; email: string; password: string; studentId?: string }) =>
+    register: (data: { name: string; studentId: string; email: string; password: string }) =>
         fetchApi<AuthResponse>('/auth/register', {
             method: 'POST',
             body: JSON.stringify(data),
@@ -66,9 +83,27 @@ export const authApi = {
             body: JSON.stringify(data),
         }),
 
-    me: () => fetchApi<AuthResponse>('/auth/me'),
+    forgotPassword: (email: string) =>
+        fetchApi<MessageResponse>('/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        }),
 
-    logout: () => fetchApi<void>('/auth/logout', { method: 'POST' }),
+    resetPassword: (token: string, newPassword: string) =>
+        fetchApi<MessageResponse>('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ token, newPassword }),
+        }),
+
+    verifyEmail: (token: string) =>
+        fetchApi<MessageResponse>(`/auth/verify-email?token=${token}`, {
+            method: 'GET',
+        }),
+
+    resendVerification: (email: string) =>
+        fetchApi<MessageResponse>(`/auth/resend-verification?email=${encodeURIComponent(email)}`, {
+            method: 'POST',
+        }),
 };
 
 // 2FA APIs
@@ -78,7 +113,8 @@ export interface TwoFactorSetup {
 }
 
 export const twoFactorApi = {
-    getStatus: () => fetchApi<{ enabled: boolean }>('/auth/2fa/status'),
+    getStatus: () =>
+        fetchApi<{ enabled: boolean }>('/auth/2fa/status', {}),
 
     setup: () =>
         fetchApi<TwoFactorSetup>('/auth/2fa/setup', {
@@ -109,9 +145,11 @@ export interface AttendanceRecord {
 }
 
 export const attendanceApi = {
-    getMyAttendance: () => fetchApi<AttendanceRecord[]>('/attendance'),
+    getMyAttendance: () =>
+        fetchApi<AttendanceRecord[]>('/attendance', {}),
 
-    getAll: () => fetchApi<AttendanceRecord[]>('/attendance/all'),
+    getAll: () =>
+        fetchApi<AttendanceRecord[]>('/attendance/all', {}),
 
     create: (data: Omit<AttendanceRecord, 'id'>) =>
         fetchApi<AttendanceRecord>('/attendance', {
@@ -141,7 +179,8 @@ export interface Notice {
 }
 
 export const noticeApi = {
-    getAll: () => fetchApi<Notice[]>('/notices'),
+    getAll: () =>
+        fetchApi<Notice[]>('/notices', {}),
 
     create: (title: string, file: File) => {
         const formData = new FormData();
@@ -183,9 +222,11 @@ export interface Exam {
 }
 
 export const examApi = {
-    getAll: () => fetchApi<Exam[]>('/exams'),
+    getAll: () =>
+        fetchApi<Exam[]>('/exams', {}),
 
-    getUpcoming: () => fetchApi<Exam[]>('/exams/upcoming'),
+    getUpcoming: () =>
+        fetchApi<Exam[]>('/exams/upcoming', {}),
 
     create: (data: Omit<Exam, 'id'>) =>
         fetchApi<Exam>('/exams', {
@@ -215,9 +256,11 @@ export interface Placement {
 }
 
 export const placementApi = {
-    getAll: () => fetchApi<Placement[]>('/placements'),
+    getAll: () =>
+        fetchApi<Placement[]>('/placements', {}),
 
-    getActive: () => fetchApi<Placement[]>('/placements/active'),
+    getActive: () =>
+        fetchApi<Placement[]>('/placements/active', {}),
 
     create: (data: Omit<Placement, 'id'>) =>
         fetchApi<Placement>('/placements', {
@@ -247,7 +290,8 @@ export interface UserInfo {
 }
 
 export const usersApi = {
-    getAllStudents: () => fetchApi<UserInfo[]>('/users/students'),
+    getAllStudents: () =>
+        fetchApi<UserInfo[]>('/users/students', {}),
 
     updateStudentId: (userId: string, studentId: string) =>
         fetchApi<UserInfo>(`/users/${userId}/student-id`, {
@@ -273,11 +317,14 @@ export interface Gig {
 }
 
 export const gigApi = {
-    getAll: () => fetchApi<Gig[]>('/gigs'),
+    getAll: () =>
+        fetchApi<Gig[]>('/gigs', {}),
 
-    getByCategory: (category: string) => fetchApi<Gig[]>(`/gigs/category/${category}`),
+    getByCategory: (category: string) =>
+        fetchApi<Gig[]>(`/gigs/category/${category}`, {}),
 
-    getMyGigs: () => fetchApi<Gig[]>('/gigs/my'),
+    getMyGigs: () =>
+        fetchApi<Gig[]>('/gigs/my', {}),
 
     create: (data: { title: string; description: string; category: string; budget: number; contactInfo: string; deadline?: string }) =>
         fetchApi<Gig>('/gigs', {
@@ -324,11 +371,14 @@ export interface ProfessorStats {
 }
 
 export const professorReviewApi = {
-    getAll: () => fetchApi<ProfessorReview[]>('/reviews'),
+    getAll: () =>
+        fetchApi<ProfessorReview[]>('/reviews', {}),
 
-    search: (name: string) => fetchApi<ProfessorReview[]>(`/reviews/search?name=${encodeURIComponent(name)}`),
+    search: (name: string) =>
+        fetchApi<ProfessorReview[]>(`/reviews/search?name=${encodeURIComponent(name)}`, {}),
 
-    getStats: () => fetchApi<ProfessorStats[]>('/reviews/stats'),
+    getStats: () =>
+        fetchApi<ProfessorStats[]>('/reviews/stats', {}),
 
     create: (data: {
         professorName: string;
@@ -360,7 +410,8 @@ export interface AttendanceAlert {
 }
 
 export const alertApi = {
-    getActive: () => fetchApi<AttendanceAlert[]>('/alerts'),
+    getActive: () =>
+        fetchApi<AttendanceAlert[]>('/alerts', {}),
 
     create: (data: { subject: string; location: string; message?: string }) =>
         fetchApi<AttendanceAlert>('/alerts', {
@@ -388,7 +439,8 @@ export interface Activity {
 }
 
 export const activityApi = {
-    get: () => fetchApi<Activity>('/activity'),
+    get: () =>
+        fetchApi<Activity>('/activity', {}),
 
     checkIn: () =>
         fetchApi<Activity>('/activity/checkin', {
@@ -423,9 +475,11 @@ export interface ChatMessage {
 }
 
 export const chatApi = {
-    getRooms: () => fetchApi<ChatRoom[]>('/chat/rooms'),
+    getRooms: () =>
+        fetchApi<ChatRoom[]>('/chat/rooms', {}),
 
-    getRoom: (roomId: string) => fetchApi<ChatRoom>(`/chat/rooms/${roomId}`),
+    getRoom: (roomId: string) =>
+        fetchApi<ChatRoom>(`/chat/rooms/${roomId}`, {}),
 
     createRoom: (data: { name: string; description?: string; broadcastMode: boolean }) =>
         fetchApi<ChatRoom>('/chat/rooms', {
@@ -438,7 +492,8 @@ export const chatApi = {
             method: 'PATCH',
         }),
 
-    getMessages: (roomId: string) => fetchApi<ChatMessage[]>(`/chat/rooms/${roomId}/messages`),
+    getMessages: (roomId: string) =>
+        fetchApi<ChatMessage[]>(`/chat/rooms/${roomId}/messages`, {}),
 
     sendMessage: (roomId: string, data: { content: string; type?: string; fileUrl?: string; fileName?: string }) =>
         fetchApi<ChatMessage>(`/chat/rooms/${roomId}/messages`, {
@@ -471,10 +526,11 @@ export interface TaskStats {
 export const taskApi = {
     getAll: (completed?: boolean) => {
         const query = completed !== undefined ? `?completed=${completed}` : '';
-        return fetchApi<Task[]>(`/tasks${query}`);
+        return fetchApi<Task[]>(`/tasks${query}`, {});
     },
 
-    getStats: () => fetchApi<TaskStats>('/tasks/stats'),
+    getStats: () =>
+        fetchApi<TaskStats>('/tasks/stats', {}),
 
     create: (data: { title: string; description?: string; category?: string; priority?: string; dueDate?: string }) =>
         fetchApi<Task>('/tasks', {

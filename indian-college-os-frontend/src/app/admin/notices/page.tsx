@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, Bell, ExternalLink, FileText } from '
 import Link from 'next/link';
 
 export default function AdminNoticesPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [notices, setNotices] = useState<Notice[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -20,8 +20,10 @@ export default function AdminNoticesPage() {
     });
 
     useEffect(() => {
-        loadNotices();
-    }, []);
+        if (token) {
+            loadNotices();
+        }
+    }, [token]);
 
     const loadNotices = async () => {
         try {

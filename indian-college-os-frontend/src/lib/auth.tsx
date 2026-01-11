@@ -1,74 +1,59 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthResponse, authApi } from './api';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { AuthResponse } from './api';
 
 interface AuthContextType {
     user: AuthResponse | null;
+    token: string | null;
     login: (userData: AuthResponse) => void;
-    logout: () => Promise<void>;
+    logout: () => void;
     isLoading: boolean;
-    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthResponse | null>(null);
+    const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Check authentication status on mount by calling /auth/me
-    const checkAuthStatus = async () => {
-        try {
-            const response = await fetch(`${API_URL}/auth/me`, {
-                credentials: 'include',
-            });
-
-            if (response.ok) {
-                const userData = await response.json();
-                setUser(userData);
-            } else {
-                setUser(null);
-            }
-        } catch {
-            setUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        checkAuthStatus();
+        // Check for stored auth data on mount
+        const storedUser = localStorage.getItem('user');
+        const storedToken = localStorage.getItem('token');
+
+        if (storedUser && storedToken) {
+            setUser(JSON.parse(storedUser));
+            setToken(storedToken);
+        }
+        setIsLoading(false);
     }, []);
 
-    const refreshUser = async () => {
-        await checkAuthStatus();
-    };
-
-    // Called after successful login - backend has already set the cookie
     const login = (userData: AuthResponse) => {
-        // Backend sets httpOnly cookie, we just update local state
+        if (!userData.token) return;
+
         setUser(userData);
+        setToken(userData.token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('token', userData.token);
+        // Set cookies for middleware
+        document.cookie = `token=${userData.token}; path=/; max-age=86400; SameSite=Strict`;
+        document.cookie = `role=${userData.role || 'STUDENT'}; path=/; max-age=86400; SameSite=Strict`;
     };
 
-    const logout = async () => {
-        try {
-            // Call backend to clear the httpOnly cookie
-            await fetch(`${API_URL}/auth/logout`, {
-                method: 'POST',
-                credentials: 'include',
-            });
-        } catch (error) {
-            console.error('Logout failed:', error);
-        } finally {
-            setUser(null);
-        }
+    const logout = () => {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        // Remove cookies
+        document.cookie = 'token=; path=/; max-age=0';
+        document.cookie = 'role=; path=/; max-age=0';
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading, refreshUser }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );
@@ -81,4 +66,3 @@ export function useAuth() {
     }
     return context;
 }
-

@@ -7,7 +7,7 @@ import { Calendar, BookOpen, Bell, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-    const { user } = useAuth();
+    const { token, user } = useAuth();
     const [recentNotices, setRecentNotices] = useState<Notice[]>([]);
     const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);

@@ -16,7 +16,7 @@ const CATEGORIES = [
 ];
 
 export default function HustlePage() {
-    const { user } = useAuth();
+    const { token, user } = useAuth();
     const [gigs, setGigs] = useState<Gig[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -29,19 +29,16 @@ export default function HustlePage() {
         contactInfo: '',
         deadline: '',
     });
-    const [filter, setFilter] = useState<'ALL' | 'MY'>('ALL'); // Added filter state
 
     useEffect(() => {
-        loadGigs();
-    }, [activeFilter, filter]); // Removed token from dependencies
+        if (token) loadGigs();
+    }, [token, activeFilter]);
 
     const loadGigs = async () => {
         try {
-            const data = filter === 'MY'
-                ? await gigApi.getMyGigs()
-                : activeFilter && activeFilter !== 'ALL'
-                    ? await gigApi.getByCategory(activeFilter)
-                    : await gigApi.getAll();
+            const data = activeFilter
+                ? await gigApi.getByCategory(activeFilter)
+                : await gigApi.getAll();
             setGigs(data);
         } catch (error) {
             console.error('Failed to load gigs:', error);

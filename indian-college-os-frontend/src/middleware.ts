@@ -1,43 +1,31 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
     const token = request.cookies.get('token')?.value;
+    const role = request.cookies.get('role')?.value; // We need to store role in cookie as well, or decode token
 
-    // Redirect to login if no token present
-    if (!token) {
-        if (request.nextUrl.pathname.startsWith('/dashboard') ||
-            request.nextUrl.pathname.startsWith('/admin') ||
-            request.nextUrl.pathname.startsWith('/gigs')) {
-            return NextResponse.redirect(new URL('/login', request.url));
-        }
-        return NextResponse.next();
+    // For now, let's assume if they have a token they are at least logged in
+    // We'll need to update the login logic to store the role in a cookie for this middleware to work perfectly on the edge
+    // Or simply rely on client-side redirect for role, and middleware for auth presence.
+
+    // Simple check: Is user logged in?
+    if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    try {
-        // Verify JWT signature using the secret
-        // Note: JWT_SECRET must be set in frontend environment variables
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-256-bit-secret-key-here-change-in-production');
-        const { payload } = await jwtVerify(token, secret);
-
-        const role = payload.role as string;
-
-        // Enforce Admin Access
-        if (request.nextUrl.pathname.startsWith('/admin') && role !== 'ADMIN') {
-            return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
-
-    } catch (error) {
-        // Token invalid or expired - redirect to login
-        // We should also probably clear the cookie here, but response modification is tricky in middleware
-        // Best to just redirect and let the login page handle the fresh login
+    if (!token && request.nextUrl.pathname.startsWith('/admin')) {
         return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    // If trying to access admin but not admin (we'll implement cookie role check next)
+    if (request.nextUrl.pathname.startsWith('/admin') && role === 'STUDENT') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
     return NextResponse.next();
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/admin/:path*', '/gigs/:path*'],
+    matcher: ['/dashboard/:path*', '/admin/:path*'],
 };

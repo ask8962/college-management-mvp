@@ -6,7 +6,7 @@ import { examApi, Exam } from '@/lib/api';
 import { BookOpen } from 'lucide-react';
 
 export default function ExamsPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
@@ -24,7 +24,7 @@ export default function ExamsPage() {
             }
         };
         loadExams();
-    }, [user]);
+    }, []);
 
     const now = new Date();
     const filteredExams = exams.filter(exam => {

@@ -7,7 +7,7 @@ import { ArrowLeft, Users, Edit, X, Check } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminStudentsPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [students, setStudents] = useState<UserInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -15,8 +15,10 @@ export default function AdminStudentsPage() {
     const [editStudentId, setEditStudentId] = useState('');
 
     useEffect(() => {
-        loadStudents();
-    }, []);
+        if (token) {
+            loadStudents();
+        }
+    }, [token]);
 
     const loadStudents = async () => {
         try {

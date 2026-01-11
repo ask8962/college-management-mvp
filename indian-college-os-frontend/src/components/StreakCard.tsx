@@ -14,7 +14,7 @@ const BADGE_INFO: Record<string, { icon: string; label: string; color: string }>
 };
 
 export default function StreakCard() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [activity, setActivity] = useState<Activity | null>(null);
     const [loading, setLoading] = useState(true);
     const [checking, setChecking] = useState(false);
@@ -35,7 +35,7 @@ export default function StreakCard() {
     };
 
     const handleCheckIn = async () => {
-        if (checking) return;
+        if (!token || checking) return;
         setChecking(true);
         try {
             const data = await activityApi.checkIn();

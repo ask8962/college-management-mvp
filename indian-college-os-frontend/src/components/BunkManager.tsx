@@ -9,7 +9,7 @@ interface BunkManagerProps {
 }
 
 export default function BunkManager({ attendance, onUpdate }: BunkManagerProps) {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [isMarking, setIsMarking] = useState(false);
     const [loading, setLoading] = useState(false);
     const [subject, setSubject] = useState('');

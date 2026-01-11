@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPlacementsPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [placements, setPlacements] = useState<Placement[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,8 +21,10 @@ export default function AdminPlacementsPage() {
     });
 
     useEffect(() => {
-        loadPlacements();
-    }, []);
+        if (token) {
+            loadPlacements();
+        }
+    }, [token]);
 
     const loadPlacements = async () => {
         try {

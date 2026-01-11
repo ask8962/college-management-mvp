@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminExamsPage() {
-    const { user } = useAuth();
+    const { token } = useAuth();
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,8 +21,10 @@ export default function AdminExamsPage() {
     });
 
     useEffect(() => {
-        loadExams();
-    }, []);
+        if (token) {
+            loadExams();
+        }
+    }, [token]);
 
     const loadExams = async () => {
         try {

@@ -83,7 +83,11 @@ public class GigService {
         Gig gig = gigRepository.findById(gigId)
                 .orElseThrow(() -> new RuntimeException("Gig not found"));
 
-        if (!gig.getPostedBy().equals(userId)) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Allow if user is owner OR user is ADMIN
+        if (!gig.getPostedBy().equals(userId) && !user.getRole().equals(User.Role.ADMIN)) {
             throw new RuntimeException("You can only delete your own gigs");
         }
 

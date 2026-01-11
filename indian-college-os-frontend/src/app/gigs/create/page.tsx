@@ -35,7 +35,7 @@ export default function CreateGigPage() {
             router.push('/gigs');
         } catch (error) {
             console.error('Failed to create gig', error);
-            alert('Failed to post gig. Please try again.');
+            alert(error instanceof Error ? error.message : 'Failed to post gig. Please try again.');
         } finally {
             setLoading(false);
         }

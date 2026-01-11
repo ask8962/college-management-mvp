@@ -14,7 +14,8 @@ import {
     Target,
     Shield,
     MessageSquare,
-    DollarSign
+    DollarSign,
+    Calculator
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -36,6 +37,7 @@ export default function Sidebar() {
         { href: '/dashboard/exams', icon: BookOpen, label: 'Exams' },
         { href: '/dashboard/placements', icon: Briefcase, label: 'Placements' },
         { href: '/dashboard/tasks', icon: Target, label: 'Tasks & Goals' },
+        { href: '/dashboard/bunk', icon: Calculator, label: 'Bunk-o-Meter' },
         { href: '/dashboard/chat', icon: MessageSquare, label: 'Discussion' },
         { href: '/dashboard/security', icon: Shield, label: 'Security' },
     ];

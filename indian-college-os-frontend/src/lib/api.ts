@@ -554,3 +554,39 @@ export const taskApi = {
             method: 'DELETE',
         }),
 };
+
+// Subject APIs (Bunk-o-Meter)
+export interface Subject {
+    id: string;
+    name: string;
+    totalClasses: number;
+    attendedClasses: number;
+    currentPercentage: number;
+    targetAttendance: number;
+    status: 'SAFE' | 'DANGER';
+    message: string;
+    safeBunks?: number;
+    neededClasses?: number;
+}
+
+export const subjectApi = {
+    getAll: () =>
+        fetchApi<Subject[]>('/subjects', {}),
+
+    create: (name: string, targetAttendance: number = 75) =>
+        fetchApi<Subject>('/subjects', {
+            method: 'POST',
+            body: JSON.stringify({ name, targetAttendance }),
+        }),
+
+    markAttendance: (id: string, status: 'PRESENT' | 'ABSENT' | 'CANCELLED') =>
+        fetchApi<Subject>(`/subjects/${id}/attendance`, {
+            method: 'POST',
+            body: JSON.stringify({ status }),
+        }),
+
+    delete: (id: string) =>
+        fetchApi<void>(`/subjects/${id}`, {
+            method: 'DELETE',
+        }),
+};

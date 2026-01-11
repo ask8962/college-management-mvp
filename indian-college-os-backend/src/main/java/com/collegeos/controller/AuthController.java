@@ -60,7 +60,7 @@ public class AuthController {
                 .secure(secureCookie)
                 .path("/")
                 .maxAge(0) // Expire immediately
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         return ResponseEntity.ok()
@@ -81,7 +81,7 @@ public class AuthController {
                     .secure(secureCookie)
                     .path("/")
                     .maxAge(Duration.ofDays(1))
-                    .sameSite("Strict")
+                    .sameSite("Lax")
                     .build();
 
             // Clear token from response body (frontend should not see it)
